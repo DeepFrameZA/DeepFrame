@@ -1,0 +1,95 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&display=swap");
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
+@custom-variant dark (&:where([data-theme=df_dark], [data-theme=df_dark] *));
+
+@plugin "daisyui/theme" {
+  name: "df_light";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: #fdfdfd;
+  --color-base-200: #ffffff;
+  --color-base-300: #f5f5f5;
+  --color-base-content: #333333;
+  --color-primary: #333333;
+  --color-primary-content: #e4e4e4;
+  --color-secondary: #333333;
+  --color-secondary-content: #e4e4e4;
+  --color-accent: #00c850;
+  --color-accent-content: #333333;
+  --color-neutral: #333333;
+  --color-neutral-content: #e4e4e4;
+  --color-info: #00baa6;
+  --color-info-content: #333333;
+  --color-success: #00c850;
+  --color-success-content: #333333;
+  --color-warning: #fa9700;
+  --color-warning-content: #333333;
+  --color-error: #b70f15;
+  --color-error-content: #e4e4e4;
+  --radius-selector: 2rem;
+  --radius-field: 0rem;
+  --radius-box: 0rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+  name: "df_dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: #181a19;
+  --color-base-200: #131413;
+  --color-base-300: #212322;
+  --color-base-content: #e4e4e4;
+  --color-primary: #e4e4e4;
+  --color-primary-content: #333333;
+  --color-secondary: #e4e4e4;
+  --color-secondary-content: #333333;
+  --color-accent: #00c850;
+  --color-accent-content: #333333;
+  --color-neutral: #212322;
+  --color-neutral-content: #e4e4e4;
+  --color-info: #00baa6;
+  --color-info-content: #333333;
+  --color-success: #00c850;
+  --color-success-content: #333333;
+  --color-warning: #fa9700;
+  --color-warning-content: #333333;
+  --color-error: #b70f15;
+  --color-error-content: #e4e4e4;
+  --radius-selector: 2rem;
+  --radius-field: 0rem;
+  --radius-box: 0rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@theme {
+  --font-Geist: "Geist";
+  --font-Inter: "Inter";
+}
+
+:root {
+  font-family: Geist, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* --sans: system-ui, "Segoe UI", Roboto, sans-serif; */
+  /* --heading: system-ui, "Segoe UI", Roboto, sans-serif; */
+  /* --mono: ui-monospace, Consolas, monospace; */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
