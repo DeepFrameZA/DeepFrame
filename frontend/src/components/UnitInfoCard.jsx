@@ -5,6 +5,7 @@ const UnitInfoCard = ({
   client_contact_number = "",
   notes = "",
   areas = [],
+  surfaces = [],
 }) => {
   return (
     <>
@@ -23,6 +24,8 @@ const UnitInfoCard = ({
                 </p>
                 <p className="pl-2 mb-3 font-bold">Contact Number:</p>
                 <p className="pl-2 mb-3 font-bold">Areas:</p>
+                <p className="pl-2 mb-3 font-bold">Surfaces:</p>
+                <p className="pl-2 mb-3 font-bold">Selected Tiles:</p>
               </div>
               <div>
                 <p className="pr-2 mb-3 text-end">
@@ -34,6 +37,10 @@ const UnitInfoCard = ({
                 <p className="pr-2 mb-3 text-end">
                   {areas.length || "Room Count"}
                 </p>
+                <p className="pr-2 mb-3 text-end">
+                  {surfaces.length || "Surface Count"}
+                </p>
+                {/* The selected tiles list should be inserted here */}
               </div>
             </div>
             <div class="aura aura-glow text-accent/75">

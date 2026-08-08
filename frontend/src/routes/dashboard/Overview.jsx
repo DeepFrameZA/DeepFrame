@@ -13,15 +13,16 @@ const Overview = ({ className = "" }) => {
         <div className="flex flex-wrap justify-center gap-6">
           {houses.map((h) => (
             <div className="lg:hover-3d">
-              <UnitInfoCard
-                className=""
-                key={h.id}
-                unit_number={h.unit_number}
-                client_surname={h.client_surname}
-                client_contact_number={h.client_contact_number}
-                notes={h.notes}
-                areas={h.areas}
-              />
+                <UnitInfoCard
+                  className=""
+                  key={h.id}
+                  unit_number={h.unit_number}
+                  client_surname={h.client_surname}
+                  client_contact_number={h.client_contact_number}
+                  notes={h.notes}
+                  areas={h.areas}
+                  surfaces={h.areas?.flatMap(a => a.surfaces || []) || []}
+                />
               <div></div>
               <div></div>
               <div></div>

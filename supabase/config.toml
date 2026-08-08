@@ -65,10 +65,8 @@ schema_paths = [
   "./schemas/extensions.sql",
   "./schemas/houses.sql",
   "./schemas/areas.sql",
-  "./schemas/surface_types.sql",
   "./schemas/surfaces.sql",
   "./schemas/tiles.sql",
-  "./schemas/selections.sql",
 ]
 
 [db.seed]
