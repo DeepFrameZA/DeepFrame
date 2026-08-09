@@ -2,9 +2,9 @@ import { HouseProvider } from "./hooks/supabase/context/HouseContext";
 import { Routes, Route } from "react-router";
 import Dashboard from "./routes/dashboard/Dashboard";
 import Overview from "./routes/dashboard/Overview";
-import ListView from "./routes/list_view/ListView";
-import HouseManager from "./routes/house_manager/HouseManager";
-import DataManager from "./routes/data_manager/DataManager";
+import HouseManager from "./routes/management/HouseManager";
+import InventoryManager from "./routes/management/InventoryManager";
+import InventoryList from "./routes/inventory_list/InventoryList";
 
 function App() {
   return (
@@ -13,14 +13,19 @@ function App() {
         <Routes>
           <Route path="" element={<Dashboard />}>
             <Route index element={<Overview className="" />} />
-            <Route path="list" element={<ListView className="" />} />
+            <Route path="management">
+              <Route
+                path="manage_houses"
+                element={<HouseManager className="" />}
+              />
+              <Route
+                path="manage_inventory"
+                element={<InventoryManager className="" />}
+              />
+            </Route>
             <Route
-              path="house_management"
-              element={<HouseManager className="" />}
-            />
-            <Route
-              path="data_management"
-              element={<DataManager className="" />}
+              path="inventory_list"
+              element={<InventoryList className="" />}
             />
           </Route>
         </Routes>

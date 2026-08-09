@@ -18,7 +18,7 @@ const UnitInfoCard = ({
             <h2 className="card-title text-xl font-extbold text-center text-accent">
               {unit_number ? `MH_${unit_number}` : "Unit Number"}
             </h2>
-            <div className="grid grid-cols-2 h-30 overflow-y-scroll">
+            <div className="grid grid-cols-2">
               <div className="">
                 <p className="pl-2 mb-3 font-bold text-base-contet">
                   Residents:
@@ -41,11 +41,13 @@ const UnitInfoCard = ({
                 <p className="pr-2 mb-3 text-end">
                   {surfaces.length || "Surface Count"}
                 </p>
-                <p className="pr-2 mb-3 text-end">
-                  {selected_tiles.length > 0
-                    ? selected_tiles.join(", ")
-                    : "None Selected"}
-                </p>
+                <ul className="h-25 overflow-y-auto scrollbar-none">
+                  {selected_tiles.map((tile, index) => (
+                    <li key={index}>
+                      <p className="pr-2 mb-3 text-end">{tile}</p>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
             <div class="aura aura-glow text-accent/75">

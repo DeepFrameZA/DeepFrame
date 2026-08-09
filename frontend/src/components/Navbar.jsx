@@ -1,200 +1,216 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import ThemeSwitch from "../components/ThemeSwitch";
+import useHasScrolled from "../hooks/useHasScrolled";
 
-const Navbar = ({ className = "" }) => {
+const Navbar = ({ className = "", content }) => {
+  const location = useLocation();
+  const isListActive = location.pathname.startsWith("/management");
+
+  const hasScrolled = useHasScrolled();
   return (
     <>
-      <div
-        className={`${className} navbar hidden lg:flex fixed top-0 z-50 bg-base-200 shadow-b shadow-sm shadow-base-content:950 dark:shadow-none dark:border-b dark:border-base-300`}
-      >
-        <div className="navbar-start">
-          <div className="text-xl font-extrabold">Deep Frame</div>
+      <div className={`${className} drawer`}>
+        <input
+          id="my-drawer-2"
+          type="checkbox"
+          className="drawer-toggle z-30"
+        />
+        <div className="drawer-content flex flex-col">
+          {/* Navbar */}
+          <div
+            className={`navbar bg-base-200 w-full fixed top-0 z-10 ${hasScrolled ? " shadow-b shadow-sm shadow-base-content:950 dark:shadow-none dark:border-b dark:border-base-300" : "border-0 shadow-none"}`}
+          >
+            <div className="navbar-start">
+              <div className="flex-none lg:hidden">
+                {" "}
+                <label
+                  htmlFor="my-drawer-2"
+                  aria-label="open sidebar"
+                  className="btn btn-square btn-ghost drawer-button"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    className="inline-block h-6 w-6 stroke-current"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    ></path>
+                  </svg>
+                </label>
+              </div>
+              <a
+                href={hasScrolled ? "#" : "#"}
+                className="btn btn-ghost text-xl"
+              >
+                Deep Frame
+              </a>
+            </div>
+            <div className="navbar-center">
+              <div className="hidden flex-none lg:block">
+                <ul className="menu menu-horizontal gap-2">
+                  {/* Navbar menu content here */}
+                  <li>
+                    <NavLink
+                      className={({ isActive }) =>
+                        isActive ? "menu-active bg-accent" : ""
+                      }
+                      to="/"
+                      end
+                    >
+                      Dashboard
+                    </NavLink>
+                  </li>
+                  <li className="dropdown dropdown-center dropdown-bottom">
+                    <div
+                      className={isListActive ? "menu-active bg-accent" : ""}
+                      tabIndex={0}
+                      role="button"
+                    >
+                      Management
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="size-4"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <ul
+                      className="dropdown-content menu bg-base-200 z-1 p-2 shadow-sm shadow-base-content:950 dark:shadow-none dark:border dark:border-base-300"
+                      tabIndex="-1"
+                    >
+                      <li>
+                        <NavLink
+                          className={({ isActive }) =>
+                            isActive ? "menu-active bg-accent" : ""
+                          }
+                          to="/management/manage_houses"
+                          end
+                        >
+                          House Manager
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink
+                          className={({ isActive }) =>
+                            isActive ? "menu-active bg-accent" : ""
+                          }
+                          to="/management/manage_inventory"
+                          end
+                        >
+                          Inventory Manager
+                        </NavLink>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <NavLink
+                      className={({ isActive }) =>
+                        isActive ? "menu-active bg-accent" : ""
+                      }
+                      to="/inventory_list"
+                      end
+                    >
+                      Inventory List
+                    </NavLink>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="navbar-end pr-2">
+              <ThemeSwitch />
+            </div>
+          </div>
+          {/* Page content here */}
+          {content}
         </div>
-        <div className="navbar-center">
-          <ul className="menu menu-horizontal">
-            <li className="">
+        <div className="drawer-side z-20">
+          <label
+            htmlFor="my-drawer-2"
+            aria-label="close sidebar"
+            className="drawer-overlay"
+          ></label>
+          <ul className="menu bg-base-200 min-h-full w-80 p-4 gap-2">
+            {/* Sidebar content here */}
+            <li>
               <NavLink
                 className={({ isActive }) =>
                   isActive ? "menu-active bg-accent" : ""
                 }
+                onClick={() => {
+                  document.getElementById("my-drawer-3").checked = false;
+                }}
                 to="/"
                 end
               >
-                <svg
-                  className="h-8 w-8"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <g
-                    fill="currentColor"
-                    strokeLinejoin="miter"
-                    strokeLinecap="butt"
-                  >
-                    <polyline
-                      points="1 11 12 2 23 11"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></polyline>
-                    <path
-                      d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></path>
-                    <line
-                      x1="12"
-                      y1="22"
-                      x2="12"
-                      y2="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></line>
-                  </g>
-                </svg>
+                Dashboard
               </NavLink>
             </li>
-            <li className="">
+            <li>
+              <div
+                className={isListActive ? "menu-active bg-accent" : ""}
+                tabIndex={0}
+                role="button"
+              >
+                Management
+              </div>
+              <ul className="mt-2 p-2">
+                <li className="mb-2">
+                  <NavLink
+                    className={({ isActive }) =>
+                      isActive ? "menu-active bg-accent" : ""
+                    }
+                    onClick={() => {
+                      document.getElementById("my-drawer-3").checked = false;
+                    }}
+                    to="/management/manage_houses"
+                    end
+                  >
+                    House Manager
+                  </NavLink>
+                </li>
+                <li className="">
+                  <NavLink
+                    className={({ isActive }) =>
+                      isActive ? "menu-active bg-accent" : ""
+                    }
+                    onClick={() => {
+                      document.getElementById("my-drawer-3").checked = false;
+                    }}
+                    to="/management/manage_inventory"
+                    end
+                  >
+                    Inventory Manager
+                  </NavLink>
+                </li>
+              </ul>
+            </li>
+            <li>
               <NavLink
                 className={({ isActive }) =>
                   isActive ? "menu-active bg-accent" : ""
                 }
-                to="/list"
+                onClick={() => {
+                  document.getElementById("my-drawer-3").checked = false;
+                }}
+                to="/inventory_list"
                 end
               >
-                <svg
-                  className="h-8 w-8"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <g
-                    fill="currentColor"
-                    strokeLinejoin="miter"
-                    strokeLinecap="butt"
-                  >
-                    <polyline
-                      points="3 14 9 14 9 17 15 17 15 14 21 14"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></polyline>
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      ry="2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></rect>
-                  </g>
-                </svg>
-              </NavLink>
-            </li>
-
-            <li className="">
-              <NavLink
-                className={({ isActive }) =>
-                  isActive ? "menu-active bg-accent" : ""
-                }
-                to="/house_management"
-                end
-              >
-                <svg
-                  className="h-8 w-8"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <g
-                    fill="currentColor"
-                    strokeLinejoin="miter"
-                    strokeLinecap="butt"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></circle>
-                    <path
-                      d="m22,13.25v-2.5l-2.318-.966c-.167-.581-.395-1.135-.682-1.654l.954-2.318-1.768-1.768-2.318.954c-.518-.287-1.073-.515-1.654-.682l-.966-2.318h-2.5l-.966,2.318c-.581.167-1.135.395-1.654.682l-2.318-.954-1.768,1.768.954,2.318c-.287.518-.515,1.073-.682,1.654l-2.318.966v2.5l2.318.966c.167.581.395,1.135.682,1.654l-.954,2.318,1.768,1.768,2.318-.954c.518.287,1.073.515,1.654.682l.966,2.318h2.5l.966-2.318c.581-.167,1.135-.395,1.654-.682l2.318.954,1.768-1.768-.954-2.318c.287-.518.515-1.073.682-1.654l2.318-.966Z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></path>
-                  </g>
-                </svg>
-              </NavLink>
-            </li>
-            <li className="">
-              <NavLink
-                className={({ isActive }) =>
-                  isActive ? "menu-active bg-accent" : ""
-                }
-                to="/data_management"
-                end
-              >
-                <svg
-                  className="h-8 w-8"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <g
-                    fill="currentColor"
-                    strokeLinejoin="miter"
-                    strokeLinecap="butt"
-                  >
-                    <polyline
-                      points="1 11 12 2 23 11"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></polyline>
-                    <path
-                      d="m5,13v7c0,1.105.895,2,2,2h10c1.105,0,2-.895,2-2v-7"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></path>
-                    <line
-                      x1="12"
-                      y1="22"
-                      x2="12"
-                      y2="18"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="square"
-                      strokeMiterlimit="10"
-                      strokeWidth="2"
-                    ></line>
-                  </g>
-                </svg>
+                Inventory List
               </NavLink>
             </li>
           </ul>
         </div>
-        <div className="navbar-end"></div>
-        <ThemeSwitch className="" />
       </div>
     </>
   );
