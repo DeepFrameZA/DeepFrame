@@ -22,6 +22,13 @@ const Overview = ({ className = "" }) => {
                   notes={h.notes}
                   areas={h.areas}
                   surfaces={h.areas?.flatMap(a => a.surfaces || []) || []}
+                  selected_tiles={(() => {
+                    const tilesMap = new Map();
+                    h.areas?.flatMap(a => a.surfaces || []).forEach(s => {
+                      if (s.selected_tile) tilesMap.set(s.selected_tile.sku, s.selected_tile.description);
+                    });
+                    return Array.from(tilesMap.values());
+                  })()}
                 />
               <div></div>
               <div></div>

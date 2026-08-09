@@ -63,10 +63,11 @@ enabled = true
 # Supports paths relative to supabase directory: "./schemas/*.sql", "./database".
 schema_paths = [
   "./schemas/extensions.sql",
+  "./schemas/tiles.sql",
   "./schemas/houses.sql",
   "./schemas/areas.sql",
   "./schemas/surfaces.sql",
-  "./schemas/tiles.sql",
+  "./schemas/permissions.sql",
 ]
 
 [db.seed]

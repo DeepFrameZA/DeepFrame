@@ -6,6 +6,7 @@ const UnitInfoCard = ({
   notes = "",
   areas = [],
   surfaces = [],
+  selected_tiles = [],
 }) => {
   return (
     <>
@@ -14,10 +15,10 @@ const UnitInfoCard = ({
           className={`${className}card w-85 bg-base-200 text-base-content ring ring-accent/30`}
         >
           <div className="card-body">
-            <h2 className="card-title text-xl font-extrabold text-center text-accent">
+            <h2 className="card-title text-xl font-extbold text-center text-accent">
               {unit_number ? `MH_${unit_number}` : "Unit Number"}
             </h2>
-            <div className="grid grid-cols-2">
+            <div className="grid grid-cols-2 h-30 overflow-y-scroll">
               <div className="">
                 <p className="pl-2 mb-3 font-bold text-base-contet">
                   Residents:
@@ -40,7 +41,11 @@ const UnitInfoCard = ({
                 <p className="pr-2 mb-3 text-end">
                   {surfaces.length || "Surface Count"}
                 </p>
-                {/* The selected tiles list should be inserted here */}
+                <p className="pr-2 mb-3 text-end">
+                  {selected_tiles.length > 0
+                    ? selected_tiles.join(", ")
+                    : "None Selected"}
+                </p>
               </div>
             </div>
             <div class="aura aura-glow text-accent/75">
