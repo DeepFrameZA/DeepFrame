@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
-import { getAllHouses, getHouse } from "../api";
+import { getAllHouses, getHouse } from "../core/services/houseService";
 
 const HouseContext = createContext(null);
 

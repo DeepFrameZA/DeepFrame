@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "../supabase/supabase";
 
 /**
  * DATA ENRICHMENT LAYER
@@ -6,12 +6,11 @@ import { supabase } from "./supabase";
  * while preserving all original table data and injecting parent references.
  */
 function enrichHouseData(house) {
-  // 1. Enrich and Flatten Areas
-  const allAreas = house.areas?.map((area) => ({
-    ...area,
-  })) || [];
+  const allAreas =
+    house.areas?.map((area) => ({
+      ...area,
+    })) || [];
 
-  // 2. Enrich and Flatten Surfaces (Inject area name/id and keep full selected_tile)
   const allSurfaces =
     house.areas?.flatMap((area) =>
       (area.surfaces || []).map((surface) => ({
@@ -21,7 +20,6 @@ function enrichHouseData(house) {
       })),
     ) || [];
 
-  // 3. Enrich and Deduplicate Tiles
   const tilesMap = new Map();
   allSurfaces.forEach((s) => {
     if (s.selected_tile) {
@@ -43,9 +41,6 @@ function enrichHouseData(house) {
   };
 }
 
-/**
- * HOUSE SERVICES
- */
 export async function getAllHouses() {
   const { data, error } = await supabase
     .from("houses")
@@ -65,47 +60,4 @@ export async function getHouse(id) {
 
   if (error) throw error;
   return enrichHouseData(data);
-}
-
-/**
- * TILE SERVICES
- */
-export async function getTiles() {
-  const { data, error } = await supabase.from("tiles").select("*");
-  if (error) throw error;
-  return data;
-}
-
-export async function getTileBySku(sku) {
-  const { data, error } = await supabase
-    .from("tiles")
-    .select("*")
-    .eq("sku", sku)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function searchTiles(filters = {}) {
-  let query = supabase.from("tiles").select("*");
-
-  if (filters.description) {
-    query = query.ilike("description", `%${filters.description}%`);
-  }
-
-  if (filters.minPrice) {
-    query = query.gte("price", filters.minPrice);
-  }
-  if (filters.maxPrice) {
-    query = query.lte("price", filters.maxPrice);
-  }
-
-  if (filters.sku) {
-    query = query.eq("sku", filters.sku);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data;
 }

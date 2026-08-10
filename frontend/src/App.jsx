@@ -1,4 +1,4 @@
-import { HouseProvider } from "./hooks/supabase/context/HouseContext";
+import { HouseProvider } from "./core/HouseContext";
 import { Routes, Route } from "react-router";
 import Dashboard from "./routes/dashboard/Dashboard";
 import Overview from "./routes/dashboard/Overview";

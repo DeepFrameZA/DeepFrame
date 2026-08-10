@@ -1,19 +1,22 @@
 import UnitInfoCard from "../../components/UnitInfoCard";
-import { useHouses } from "../../hooks/supabase/context/HouseContext";
-// import SearchBar from "../../components/SearchBar";
+import { useHouses } from "../../core/HouseContext";
 
 const Overview = ({ className = "" }) => {
   const { houses } = useHouses();
-  // if (loading) return <span className="loading loading-spinner" />;
+  // const { houses, loading } = useHouses();
+  // if (loading) {
+  //   return (
+  //     <div className="flex justify-center items-center min-h-screen">
+  //       <span className="loading loading-spinner loading-lg text-primary"></span>
+  //     </div>
+  //   );
+  // }
   return (
     <>
       <div className={`${className} py-6 max-w-[95%] relative top-14`}>
-        {/* <SearchBar className="sticky top-0 lg:top-14 z-50 mb-6" /> */}
-
         <div className="flex flex-wrap justify-center gap-6">
           {houses.map((h) => (
             <div className="" key={h.id}>
-              {/* <div className="lg:hover-3d" key={h.id}> */}
               <UnitInfoCard
                 className=""
                 unit_number={h.unit_number}

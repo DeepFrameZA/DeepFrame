@@ -1,12 +1,18 @@
 import { NavLink, useLocation } from "react-router";
 import ThemeSwitch from "../components/ThemeSwitch";
-import useHasScrolled from "../hooks/useHasScrolled";
+import useHasScrolled from "../core/hooks/useHasScrolled";
+import { APP_ROUTES, isPathInSection } from "../core/routes";
 
 const Navbar = ({ className = "", content }) => {
+  // const Navbar = ({ className = "", isDrawerOpen, setIsDrawerOpen, content }) => {
   const location = useLocation();
-  const isListActive = location.pathname.startsWith("/management");
+  const isListActive = isPathInSection(
+    location.pathname,
+    APP_ROUTES.MANAGEMENT,
+  );
 
   const hasScrolled = useHasScrolled();
+
   return (
     <>
       <div className={`${className} drawer`}>
@@ -43,12 +49,9 @@ const Navbar = ({ className = "", content }) => {
                   </svg>
                 </label>
               </div>
-              <a
-                href={hasScrolled ? "#" : "#"}
-                className="btn btn-ghost text-xl"
-              >
+              <div className="text-xl font-bold pl-2 text-accent">
                 Deep Frame
-              </a>
+              </div>
             </div>
             <div className="navbar-center">
               <div className="hidden flex-none lg:block">
@@ -57,7 +60,7 @@ const Navbar = ({ className = "", content }) => {
                   <li>
                     <NavLink
                       className={({ isActive }) =>
-                        isActive ? "menu-active bg-accent" : ""
+                        `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                       }
                       to="/"
                       end
@@ -67,7 +70,7 @@ const Navbar = ({ className = "", content }) => {
                   </li>
                   <li className="dropdown dropdown-center dropdown-bottom">
                     <div
-                      className={isListActive ? "menu-active bg-accent" : ""}
+                      className={`${isListActive ? "menu-active bg-accent" : "bg-base-200"}`}
                       tabIndex={0}
                       role="button"
                     >
@@ -91,8 +94,9 @@ const Navbar = ({ className = "", content }) => {
                     >
                       <li>
                         <NavLink
+                          onClick={() => document.activeElement.blur()}
                           className={({ isActive }) =>
-                            isActive ? "menu-active bg-accent" : ""
+                            `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                           }
                           to="/management/manage_houses"
                           end
@@ -102,8 +106,9 @@ const Navbar = ({ className = "", content }) => {
                       </li>
                       <li>
                         <NavLink
+                          onClick={() => document.activeElement.blur()}
                           className={({ isActive }) =>
-                            isActive ? "menu-active bg-accent" : ""
+                            `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                           }
                           to="/management/manage_inventory"
                           end
@@ -116,7 +121,7 @@ const Navbar = ({ className = "", content }) => {
                   <li>
                     <NavLink
                       className={({ isActive }) =>
-                        isActive ? "menu-active bg-accent" : ""
+                        `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                       }
                       to="/inventory_list"
                       end
@@ -145,7 +150,7 @@ const Navbar = ({ className = "", content }) => {
             <li>
               <NavLink
                 className={({ isActive }) =>
-                  isActive ? "menu-active bg-accent" : ""
+                  `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                 }
                 onClick={() => {
                   document.getElementById("my-drawer-3").checked = false;
@@ -158,7 +163,7 @@ const Navbar = ({ className = "", content }) => {
             </li>
             <li>
               <div
-                className={isListActive ? "menu-active bg-accent" : ""}
+                className={`${isListActive ? "menu-active bg-accent" : "bg-base-200"}`}
                 tabIndex={0}
                 role="button"
               >
@@ -168,7 +173,7 @@ const Navbar = ({ className = "", content }) => {
                 <li className="mb-2">
                   <NavLink
                     className={({ isActive }) =>
-                      isActive ? "menu-active bg-accent" : ""
+                      `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                     }
                     onClick={() => {
                       document.getElementById("my-drawer-3").checked = false;
@@ -182,7 +187,7 @@ const Navbar = ({ className = "", content }) => {
                 <li className="">
                   <NavLink
                     className={({ isActive }) =>
-                      isActive ? "menu-active bg-accent" : ""
+                      `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                     }
                     onClick={() => {
                       document.getElementById("my-drawer-3").checked = false;
@@ -198,7 +203,7 @@ const Navbar = ({ className = "", content }) => {
             <li>
               <NavLink
                 className={({ isActive }) =>
-                  isActive ? "menu-active bg-accent" : ""
+                  `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
                 }
                 onClick={() => {
                   document.getElementById("my-drawer-3").checked = false;

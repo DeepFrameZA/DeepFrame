@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const defaultTheme = "ssa_dark";
+const defaultTheme = "df_dark";
 
 const getCurrentTheme = () => {
   return (
@@ -27,7 +27,7 @@ const useTheme = () => {
     return () => observer.disconnect();
   }, []);
 
-  return theme; // "ssa_light" or "ssa_dark"
+  return theme; // "df_light" or "df_dark"
 };
 
 export default useTheme;

@@ -50,7 +50,7 @@ const UnitInfoCard = ({
                 </ul>
               </div>
             </div>
-            <div class="aura aura-glow text-accent/75">
+            <div class="aura aura-glow text-accent/75 transition">
               <div>
                 <p className="h-40 p-2 text-base-content ring ring-accent/30 bg-base-200">
                   {notes || ""}
