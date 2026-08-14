@@ -61,3 +61,129 @@ export async function getHouse(id) {
   if (error) throw error;
   return enrichHouseData(data);
 }
+
+export async function createHouse(house) {
+  const { data, error } = await supabase
+    .from("houses")
+    .insert(house)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateHouse(id, updates) {
+  const { data, error } = await supabase
+    .from("houses")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteHouse(id) {
+  const { error } = await supabase.from("houses").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+export async function createArea(area) {
+  const { data, error } = await supabase
+    .from("areas")
+    .insert(area)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateArea(id, updates) {
+  const { data, error } = await supabase
+    .from("areas")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteArea(id) {
+  const { error } = await supabase.from("areas").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+export async function createSurface(surface) {
+  const { data, error } = await supabase
+    .from("surfaces")
+    .insert(surface)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateSurface(id, updates) {
+  const { data, error } = await supabase
+    .from("surfaces")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteSurface(id) {
+  const { error } = await supabase.from("surfaces").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}
+
+export async function createTile(tile) {
+  const { data, error } = await supabase
+    .from("tiles")
+    .insert(tile)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTile(sku, updates) {
+  const { data, error } = await supabase
+    .from("tiles")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("sku", sku)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTile(sku) {
+  const { error } = await supabase.from("tiles").delete().eq("sku", sku);
+  if (error) throw error;
+  return true;
+}
+
+export async function getAllTiles() {
+  const { data, error } = await supabase
+    .from("tiles")
+    .select("*")
+    .order("description");
+
+  if (error) throw error;
+  return data;
+}

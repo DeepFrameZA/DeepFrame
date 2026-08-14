@@ -24,7 +24,7 @@ const Navbar = ({ className = "", content }) => {
         <div className="drawer-content flex flex-col">
           {/* Navbar */}
           <div
-            className={`navbar bg-base-200 w-full fixed top-0 z-10 ${hasScrolled ? " shadow-b shadow-sm shadow-base-content:950 dark:shadow-none dark:border-b dark:border-base-300" : "border-0 shadow-none"}`}
+            className={`navbar bg-base-200 w-full fixed top-0 z-10 ${hasScrolled ? " shadow-b shadow-md shadow-base-300 dark:shadow-none dark:border-b dark:border-base-300" : "border-0 shadow-none"}`}
           >
             <div className="navbar-start">
               <div className="flex-none lg:hidden">
@@ -49,9 +49,7 @@ const Navbar = ({ className = "", content }) => {
                   </svg>
                 </label>
               </div>
-              <div className="text-xl font-bold pl-2 text-accent">
-                Deep Frame
-              </div>
+              <div className="text-xl font-bold pl-2">Deep Frame</div>
             </div>
             <div className="navbar-center">
               <div className="hidden flex-none lg:block">
@@ -60,7 +58,7 @@ const Navbar = ({ className = "", content }) => {
                   <li>
                     <NavLink
                       className={({ isActive }) =>
-                        `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
+                        `text-md font-bold ${isActive ? "menu-active" : ""}`
                       }
                       to="/"
                       end
@@ -68,9 +66,20 @@ const Navbar = ({ className = "", content }) => {
                       Dashboard
                     </NavLink>
                   </li>
+                  <li>
+                    <NavLink
+                      className={({ isActive }) =>
+                        `text-md font-bold ${isActive ? "menu-active" : ""}`
+                      }
+                      to="/inventory_list"
+                      end
+                    >
+                      Inventory List
+                    </NavLink>
+                  </li>
                   <li className="dropdown dropdown-center dropdown-bottom">
                     <div
-                      className={`${isListActive ? "menu-active bg-accent" : "bg-base-200"}`}
+                      className={`text-md font-bold ${isListActive ? "menu-active" : ""}`}
                       tabIndex={0}
                       role="button"
                     >
@@ -89,14 +98,14 @@ const Navbar = ({ className = "", content }) => {
                       </svg>
                     </div>
                     <ul
-                      className="dropdown-content menu bg-base-200 z-1 p-2 shadow-sm shadow-base-content:950 dark:shadow-none dark:border dark:border-base-300"
+                      className="dropdown-content gap-2 menu bg-base-200 z-1 p-2 shadow-md shadow-base-300 dark:shadow-none dark:border dark:border-base-300"
                       tabIndex="-1"
                     >
                       <li>
                         <NavLink
                           onClick={() => document.activeElement.blur()}
                           className={({ isActive }) =>
-                            `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
+                            `text-md font-bold ${isActive ? "menu-active" : ""}`
                           }
                           to="/management/manage_houses"
                           end
@@ -108,7 +117,19 @@ const Navbar = ({ className = "", content }) => {
                         <NavLink
                           onClick={() => document.activeElement.blur()}
                           className={({ isActive }) =>
-                            `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
+                            `text-md font-bold ${isActive ? "menu-active" : ""}`
+                          }
+                          to="/management/manage_documents"
+                          end
+                        >
+                          Document Manager
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink
+                          onClick={() => document.activeElement.blur()}
+                          className={({ isActive }) =>
+                            `text-md font-bold ${isActive ? "menu-active" : ""}`
                           }
                           to="/management/manage_inventory"
                           end
@@ -118,22 +139,11 @@ const Navbar = ({ className = "", content }) => {
                       </li>
                     </ul>
                   </li>
-                  <li>
-                    <NavLink
-                      className={({ isActive }) =>
-                        `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
-                      }
-                      to="/inventory_list"
-                      end
-                    >
-                      Inventory List
-                    </NavLink>
-                  </li>
                 </ul>
               </div>
             </div>
             <div className="navbar-end pr-2">
-              <ThemeSwitch />
+              <ThemeSwitch className="" />
             </div>
           </div>
           {/* Page content here */}
@@ -149,9 +159,7 @@ const Navbar = ({ className = "", content }) => {
             {/* Sidebar content here */}
             <li>
               <NavLink
-                className={({ isActive }) =>
-                  `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
-                }
+                className={({ isActive }) => `${isActive ? "menu-active" : ""}`}
                 onClick={() => {
                   document.getElementById("my-drawer-3").checked = false;
                 }}
@@ -162,18 +170,30 @@ const Navbar = ({ className = "", content }) => {
               </NavLink>
             </li>
             <li>
+              <NavLink
+                className={({ isActive }) => `${isActive ? "menu-active" : ""}`}
+                onClick={() => {
+                  document.getElementById("my-drawer-3").checked = false;
+                }}
+                to="/inventory_list"
+                end
+              >
+                Inventory List
+              </NavLink>
+            </li>
+            <li>
               <div
-                className={`${isListActive ? "menu-active bg-accent" : "bg-base-200"}`}
+                className={`${isListActive ? "menu-active" : ""}`}
                 tabIndex={0}
                 role="button"
               >
                 Management
               </div>
-              <ul className="mt-2 p-2">
-                <li className="mb-2">
+              <ul className="">
+                <li className="my-2">
                   <NavLink
                     className={({ isActive }) =>
-                      `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
+                      `${isActive ? "menu-active" : ""}`
                     }
                     onClick={() => {
                       document.getElementById("my-drawer-3").checked = false;
@@ -184,10 +204,24 @@ const Navbar = ({ className = "", content }) => {
                     House Manager
                   </NavLink>
                 </li>
+                <li className="mb-2">
+                  <NavLink
+                    className={({ isActive }) =>
+                      `${isActive ? "menu-active" : ""}`
+                    }
+                    onClick={() => {
+                      document.getElementById("my-drawer-3").checked = false;
+                    }}
+                    to="/management/manage_documents"
+                    end
+                  >
+                    Document Manager
+                  </NavLink>
+                </li>
                 <li className="">
                   <NavLink
                     className={({ isActive }) =>
-                      `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
+                      `${isActive ? "menu-active" : ""}`
                     }
                     onClick={() => {
                       document.getElementById("my-drawer-3").checked = false;
@@ -199,20 +233,6 @@ const Navbar = ({ className = "", content }) => {
                   </NavLink>
                 </li>
               </ul>
-            </li>
-            <li>
-              <NavLink
-                className={({ isActive }) =>
-                  `${isActive ? "menu-active bg-accent" : "bg-base-200"}`
-                }
-                onClick={() => {
-                  document.getElementById("my-drawer-3").checked = false;
-                }}
-                to="/inventory_list"
-                end
-              >
-                Inventory List
-              </NavLink>
             </li>
           </ul>
         </div>

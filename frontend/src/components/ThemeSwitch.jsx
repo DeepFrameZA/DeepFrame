@@ -22,7 +22,7 @@ const ThemeSwitch = ({ className = "" }) => {
     <label className={`swap swap-rotate ${className}`}>
       <input
         type="checkbox"
-        className="theme-controller"
+        className="theme-controller focus-within:outline-0 focus-within:border-0 focus-within:shadow-none"
         onChange={handleThemeChange}
         checked={theme === darkThemeName}
       />
