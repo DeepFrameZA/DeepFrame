@@ -499,15 +499,63 @@ const HouseManager = ({ className = "className" }) => {
                                       </div>
                                     </div>
                                     <div className="flex justify-end items-center w-full mb-6">
-                                      <button className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4">
+                                      <button
+                                        onClick={() => {
+                                          document
+                                            .getElementById(
+                                              `unit_number_${h.unit_number}_delete_area_modal_${area.id}`,
+                                            )
+                                            .showModal();
+                                        }}
+                                        className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
+                                      >
                                         <span className="text-error-content">
                                           Delete Area
                                         </span>
                                         <DeleteIcon
-                                          area_id={area.id}
+                                          unique_id={area.id}
                                           className="w-4 h-4 fill-error-content"
                                         />
                                       </button>
+                                      <dialog
+                                        id={`unit_number_${h.unit_number}_delete_area_modal_${area.id}`}
+                                        className="modal modal-middle"
+                                      >
+                                        <div className="modal-box">
+                                          <h3 className="font-semibold text-lg mb-6">
+                                            Are you sure you want to delete{" "}
+                                            <span className="font-bold text-xl">
+                                              {area.name}
+                                            </span>
+                                            ?
+                                          </h3>
+                                          <p className="">
+                                            This action is permanent and not
+                                            reversable.
+                                          </p>
+                                          <div className="modal-action flex justify-end gap-y-4">
+                                            <form method="dialog">
+                                              <button className="btn btn-sm focus-within:outline-0">
+                                                Cancel
+                                              </button>
+                                            </form>
+                                            <button
+                                              className="btn btn-error btn-sm"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                              }}
+                                            >
+                                              <span className="text-error-content">
+                                                Confirm
+                                              </span>
+                                              <DeleteIcon
+                                                unique_id={area.id}
+                                                className="w-4 h-4 fill-error-content"
+                                              />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </dialog>
                                     </div>
                                   </div>
                                 </div>
@@ -515,6 +563,66 @@ const HouseManager = ({ className = "className" }) => {
                             })}
                           </div>
                         </section>
+                        <div className="divider text-sm"></div>
+                        <div className="flex justify-end items-center w-full">
+                          <button
+                            className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
+                            onClick={() => {
+                              document
+                                .getElementById(
+                                  `unit_number_${h.unit_number}_delete_house_modal`,
+                                )
+                                .showModal();
+                            }}
+                          >
+                            <span className="text-error-content">
+                              Delete House
+                            </span>
+                            <DeleteIcon
+                              unique_id={houses.id}
+                              className="w-4 h-4 fill-error-content"
+                            />
+                          </button>
+
+                          <dialog
+                            id={`unit_number_${h.unit_number}_delete_house_modal`}
+                            className="modal modal-middle"
+                          >
+                            <div className="modal-box">
+                              <h3 className="font-semibold text-lg mb-6">
+                                Are you sure you want to delete house{" "}
+                                <span className="font-bold text-xl">
+                                  {h.unit_number}
+                                </span>
+                                ?
+                              </h3>
+                              <p className="">
+                                This action is permanent and not reversable.
+                              </p>
+                              <div className="modal-action flex justify-end gap-y-4">
+                                <form method="dialog">
+                                  <button className="btn btn-sm focus-within:outline-0">
+                                    Cancel
+                                  </button>
+                                </form>
+                                <button
+                                  className="btn btn-error btn-sm"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                  }}
+                                >
+                                  <span className="text-error-content">
+                                    Confirm
+                                  </span>
+                                  <DeleteIcon
+                                    unique_id={houses.id}
+                                    className="w-4 h-4 fill-error-content"
+                                  />
+                                </button>
+                              </div>
+                            </div>
+                          </dialog>
+                        </div>
                       </div>
                     </div>
                   );
