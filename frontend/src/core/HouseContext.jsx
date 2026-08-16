@@ -42,7 +42,7 @@ export function HouseProvider({ children }) {
     setHouses((prevHouses) =>
       prevHouses.map((house) =>
         house.id === houseId
-          ? { ...house, allAreas: [...house.allAreas, newArea] }
+          ? { ...house, allAreas: [newArea, ...house.allAreas] }
           : house
       )
     );

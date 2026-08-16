@@ -48,7 +48,14 @@ export async function getAllHouses() {
     .order("unit_number");
 
   if (error) throw error;
-  return data.map(enrichHouseData);
+  
+  return data.map((house) => {
+    const enriched = enrichHouseData(house);
+    enriched.allAreas.sort((a, b) => 
+      new Date(b.created_at) - new Date(a.created_at)
+    );
+    return enriched;
+  });
 }
 
 export async function getHouse(id) {

@@ -18,6 +18,8 @@ const HouseManager = ({ className = "className" }) => {
   const [fieldValues, setFieldValues] = useState({});
   const [savingField, setSavingField] = useState(null);
   const [creatingAreaId, setCreatingAreaId] = useState(null);
+  const [newAreaName, setNewAreaName] = useState("");
+  const [activeHouseId, setActiveHouseId] = useState(null);
 
   useEffect(() => {
     const initial = {};
@@ -66,9 +68,14 @@ const HouseManager = ({ className = "className" }) => {
     }
   };
 
-  const handleAddArea = async (houseId) => {
-    setCreatingAreaId(houseId);
-    const areaData = { house_id: houseId, name: "Unnamed area" };
+  const submitAddArea = async () => {
+    if (!newAreaName.trim()) {
+      toast.error("Please provide an area name");
+      return;
+    }
+
+    setCreatingAreaId(activeHouseId);
+    const areaData = { house_id: activeHouseId, name: newAreaName.trim() };
     const createPromise = createArea(areaData);
 
     try {
@@ -78,12 +85,13 @@ const HouseManager = ({ className = "className" }) => {
         error: (err) => err?.message ?? "Create failed",
       });
 
-      addAreaLocal(houseId, newArea);
-      setEditingField((prev) => ({ ...prev, [`${newArea.id}_name`]: true }));
-      setFieldValues((prev) => ({
-        ...prev,
-        [`${newArea.id}_name`]: "Unnamed area",
-      }));
+      addAreaLocal(activeHouseId, newArea);
+
+      const modal = document.getElementById(
+        `unit_number_${houses.find((h) => h.id === activeHouseId)?.unit_number}_add_area_modal`,
+      );
+      modal?.close();
+      setNewAreaName("");
     } catch (error) {
       console.error("Create area failed:", error);
     } finally {
@@ -113,17 +121,21 @@ const HouseManager = ({ className = "className" }) => {
               </div>
 
               <div className="">
-                {houses.map((h) => {
+                {houses.map((h, index) => {
                   const unitNumberFieldKey = `${h.id}_unit_number`;
                   const clientSurnameFieldKey = `${h.id}_client_surname`;
                   const clientContactNumberFieldKey = `${h.id}_client_contact_number`;
 
                   return (
                     <div
-                      className="collapse first:collapse-open collapse-arrow mb-3 bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none"
+                      className="collapse collapse-arrow mb-3 bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none"
                       key={h.id}
                     >
-                      <input type="checkbox" className="peer" />
+                      <input
+                        type="checkbox"
+                        className="peer"
+                        defaultChecked={index === 0}
+                      />
                       <div className="collapse-title font-semibold after:inset-s-5 after:inset-e-auto pe-4 ps-12">
                         {h.unit_number}
                       </div>
@@ -338,6 +350,8 @@ const HouseManager = ({ className = "className" }) => {
                               className="btn btn-sm focus-within:outline-0"
                               disabled={creatingAreaId === h.id}
                               onClick={() => {
+                                setActiveHouseId(h.id);
+                                setNewAreaName("");
                                 document
                                   .getElementById(
                                     `unit_number_${h.unit_number}_add_area_modal`,
@@ -368,26 +382,34 @@ const HouseManager = ({ className = "className" }) => {
                                     placeholder="Area name"
                                     type="text"
                                     required
+                                    value={
+                                      activeHouseId === h.id ? newAreaName : ""
+                                    }
+                                    onChange={(e) =>
+                                      setNewAreaName(e.target.value)
+                                    }
                                   />
                                 </label>
                                 <div className="modal-action flex justify-end gap-y-4">
                                   <form method="dialog">
-                                    {/* if there is a button in form, it will close the modal */}
                                     <button className="btn text-error">
                                       Cancel
                                     </button>
                                   </form>
-                                  <form method="dialog">
-                                    {/* if there is a button in form, it will close the modal */}
-                                    <button
-                                      className="btn"
-                                      onClick={() => {
-                                        handleAddArea(h.id);
-                                      }}
-                                    >
-                                      Add
-                                    </button>
-                                  </form>
+                                  <button
+                                    className="btn"
+                                    disabled={creatingAreaId === h.id}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      submitAddArea();
+                                    }}
+                                  >
+                                    {creatingAreaId === h.id ? (
+                                      <span className="loading loading-spinner text-current" />
+                                    ) : (
+                                      "Add"
+                                    )}
+                                  </button>
                                 </div>
                               </div>
                             </dialog>
