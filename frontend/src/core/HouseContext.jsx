@@ -21,9 +21,36 @@ export function HouseProvider({ children }) {
     setSelectedHouse(data);
   }
 
+  function updateHouseLocal(id, updates) {
+    setHouses((prevHouses) =>
+      prevHouses.map((house) => (house.id === id ? { ...house, ...updates } : house))
+    );
+  }
+
+  function updateAreaLocal(id, updates) {
+    setHouses((prevHouses) =>
+      prevHouses.map((house) => ({
+        ...house,
+        allAreas: house.allAreas.map((area) =>
+          area.id === id ? { ...area, ...updates } : area
+        ),
+      }))
+    );
+  }
+
+  function addAreaLocal(houseId, newArea) {
+    setHouses((prevHouses) =>
+      prevHouses.map((house) =>
+        house.id === houseId
+          ? { ...house, allAreas: [...house.allAreas, newArea] }
+          : house
+      )
+    );
+  }
+
   return (
     <HouseContext.Provider
-      value={{ houses, selectedHouse, loading, selectHouse }}
+      value={{ houses, selectedHouse, loading, selectHouse, updateHouseLocal, updateAreaLocal, addAreaLocal }}
     >
       {children}
     </HouseContext.Provider>

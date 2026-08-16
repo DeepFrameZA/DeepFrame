@@ -1,4 +1,4 @@
-const SaveIcon = ({ className = "" }) => {
+const SaveIcon = ({ className = "", unique_id = "" }) => {
   const pathClass = "";
 
   return (
@@ -7,13 +7,13 @@ const SaveIcon = ({ className = "" }) => {
         className={` ${className}`}
         viewBox="0 0 16 16"
         version="1.1"
-        id="svg2"
+        id={`save_icon_svg${unique_id}`}
         xmlns="http://www.w3.org/2000/svg"
         xmlnssvg="http://www.w3.org/2000/svg"
       >
         <defs id="defs2" />
         <g
-          fill-rule="evenodd"
+          fillRule="evenodd"
           id="g2"
           transform="matrix(0.10021754,0,0,0.10030342,-4.8172888,-4.8175728)"
         >

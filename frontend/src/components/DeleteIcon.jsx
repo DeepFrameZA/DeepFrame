@@ -1,4 +1,4 @@
-const DeleteIcon = ({ className = "" }) => {
+const DeleteIcon = ({ className = "", area_id = "" }) => {
   const pathClass = "";
 
   return (
@@ -7,8 +7,8 @@ const DeleteIcon = ({ className = "" }) => {
         className={` ${className}`}
         viewBox="0 0 16 16"
         version="1.1"
-        id="svg2"
-        xmlspace="preserve"
+        id={`delete_icon_svg${area_id}`}
+        xmlSpace="preserve"
         xmlns="http://www.w3.org/2000/svg"
         xmlnssvg="http://www.w3.org/2000/svg"
       >

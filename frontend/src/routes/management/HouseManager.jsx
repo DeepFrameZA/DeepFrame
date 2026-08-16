@@ -1,12 +1,95 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "../../components/SearchBar";
 import { useHouses } from "../../core/HouseContext";
+import {
+  updateHouse,
+  updateArea,
+  createArea,
+} from "../../core/services/houseService";
 import EditIcon from "../../components/EditIcon";
 import SaveIcon from "../../components/SaveIcon";
+import DeleteIcon from "../../components/DeleteIcon";
+import toast from "react-hot-toast";
 
 const HouseManager = ({ className = "className" }) => {
-  const { houses } = useHouses();
+  const { houses, updateHouseLocal, updateAreaLocal, addAreaLocal } =
+    useHouses();
   const [editingField, setEditingField] = useState({});
+  const [fieldValues, setFieldValues] = useState({});
+  const [savingField, setSavingField] = useState(null);
+  const [creatingAreaId, setCreatingAreaId] = useState(null);
+
+  useEffect(() => {
+    const initial = {};
+    houses.forEach((h) => {
+      initial[`${h.id}_unit_number`] = h.unit_number;
+      initial[`${h.id}_client_surname`] = h.client_surname;
+      initial[`${h.id}_client_contact_number`] = h.client_contact_number;
+      h.allAreas.forEach((area) => {
+        initial[`${area.id}_name`] = area.name;
+      });
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFieldValues(initial);
+  }, [houses]);
+
+  const handleSaveEntity = async (
+    updateFn,
+    updateLocalFn,
+    entityId,
+    fieldKey,
+    newValue,
+    displayName,
+  ) => {
+    const fieldName = fieldKey.split("_").slice(1).join("_");
+    const oldValue = fieldValues[fieldKey];
+
+    setSavingField(fieldKey);
+    updateLocalFn(entityId, { [fieldName]: newValue });
+
+    const savePromise = updateFn(entityId, { [fieldName]: newValue });
+
+    try {
+      await toast.promise(savePromise, {
+        loading: `Saving ${displayName}...`,
+        success: `${displayName} saved!`,
+        error: (err) => err?.message ?? "Save failed",
+      });
+      setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
+    } catch (error) {
+      console.error("Save failed:", error);
+      updateLocalFn(entityId, { [fieldName]: oldValue });
+      setFieldValues((prev) => ({ ...prev, [fieldKey]: oldValue }));
+      setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
+    } finally {
+      setSavingField(null);
+    }
+  };
+
+  const handleAddArea = async (houseId) => {
+    setCreatingAreaId(houseId);
+    const areaData = { house_id: houseId, name: "Unnamed area" };
+    const createPromise = createArea(areaData);
+
+    try {
+      const newArea = await toast.promise(createPromise, {
+        loading: "Creating area...",
+        success: "Area created!",
+        error: (err) => err?.message ?? "Create failed",
+      });
+
+      addAreaLocal(houseId, newArea);
+      setEditingField((prev) => ({ ...prev, [`${newArea.id}_name`]: true }));
+      setFieldValues((prev) => ({
+        ...prev,
+        [`${newArea.id}_name`]: "Unnamed area",
+      }));
+    } catch (error) {
+      console.error("Create area failed:", error);
+    } finally {
+      setCreatingAreaId(null);
+    }
+  };
 
   return (
     <>
@@ -37,7 +120,7 @@ const HouseManager = ({ className = "className" }) => {
 
                   return (
                     <div
-                      className="collapse first:collapse-open collapse-arrow mb-3 bg-base-100 border border-base-300 focus-within:outline-0 focus-within:shadow-none"
+                      className="collapse first:collapse-open collapse-arrow mb-3 bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none"
                       key={h.id}
                     >
                       <input type="checkbox" className="peer" />
@@ -46,7 +129,7 @@ const HouseManager = ({ className = "className" }) => {
                       </div>
                       <div className="collapse-content z-1">
                         <section className="">
-                          <div className="flex justify-center font-semibold text-sm mb-2">
+                          <div className="flex justify-center font-semibold text-sm mb-6">
                             GENERAL INFORMATION
                           </div>
 
@@ -58,35 +141,50 @@ const HouseManager = ({ className = "className" }) => {
                                   className=""
                                   required
                                   disabled={!editingField[unitNumberFieldKey]}
-                                  placeholder="Unit number"
-                                  defaultValue={h.unit_number}
+                                  value={
+                                    fieldValues[unitNumberFieldKey] ??
+                                    h.unit_number
+                                  }
+                                  onChange={(e) =>
+                                    setFieldValues((prev) => ({
+                                      ...prev,
+                                      [unitNumberFieldKey]: e.target.value,
+                                    }))
+                                  }
                                 />
                               </label>
-                              <label className="swap btn join-item focus-within:outline-0">
-                                <input type="checkbox" />
-                                <div
-                                  className="swap-on"
-                                  onClick={() =>
+                              <button
+                                className="btn join-item focus-within:outline-0"
+                                disabled={savingField === unitNumberFieldKey}
+                                onClick={() => {
+                                  if (editingField[unitNumberFieldKey]) {
+                                    handleSaveEntity(
+                                      updateHouse,
+                                      updateHouseLocal,
+                                      h.id,
+                                      unitNumberFieldKey,
+                                      fieldValues[unitNumberFieldKey],
+                                      "unit number",
+                                    );
+                                  } else {
                                     setEditingField((prev) => ({
                                       ...prev,
                                       [unitNumberFieldKey]: true,
-                                    }))
+                                    }));
                                   }
-                                >
-                                  <EditIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                                <div
-                                  className="swap-off"
-                                  onClick={() =>
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [unitNumberFieldKey]: false,
-                                    }))
-                                  }
-                                >
-                                  <SaveIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                              </label>
+                                }}
+                              >
+                                {savingField === unitNumberFieldKey ? (
+                                  <span className="loading loading-spinner text-current" />
+                                ) : editingField[unitNumberFieldKey] ? (
+                                  <SaveIcon
+                                    className="w-4 h-4 fill-base-content"
+                                    unique_id={`save_unit_number_field_${h.unit_number}`}
+                                  />
+                                ) : (
+                                  <EditIcon className="w-4 h-4 fill-base-content" />
+                                )}
+                              </button>
                             </div>
 
                             <div className="flex join">
@@ -98,35 +196,50 @@ const HouseManager = ({ className = "className" }) => {
                                   disabled={
                                     !editingField[clientSurnameFieldKey]
                                   }
-                                  placeholder="Client surname"
-                                  defaultValue={h.client_surname}
+                                  value={
+                                    fieldValues[clientSurnameFieldKey] ??
+                                    h.client_surname
+                                  }
+                                  onChange={(e) =>
+                                    setFieldValues((prev) => ({
+                                      ...prev,
+                                      [clientSurnameFieldKey]: e.target.value,
+                                    }))
+                                  }
                                 />
                               </label>
-                              <label className="swap btn join-item focus-within:outline-0">
-                                <input type="checkbox" />
-                                <div
-                                  className="swap-on"
-                                  onClick={() =>
+                              <button
+                                className="btn join-item focus-within:outline-0"
+                                disabled={savingField === clientSurnameFieldKey}
+                                onClick={() => {
+                                  if (editingField[clientSurnameFieldKey]) {
+                                    handleSaveEntity(
+                                      updateHouse,
+                                      updateHouseLocal,
+                                      h.id,
+                                      clientSurnameFieldKey,
+                                      fieldValues[clientSurnameFieldKey],
+                                      "client surname",
+                                    );
+                                  } else {
                                     setEditingField((prev) => ({
                                       ...prev,
                                       [clientSurnameFieldKey]: true,
-                                    }))
+                                    }));
                                   }
-                                >
-                                  <EditIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                                <div
-                                  className="swap-off"
-                                  onClick={() =>
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [clientSurnameFieldKey]: false,
-                                    }))
-                                  }
-                                >
-                                  <SaveIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                              </label>
+                                }}
+                              >
+                                {savingField === clientSurnameFieldKey ? (
+                                  <span className="loading loading-spinner text-current" />
+                                ) : editingField[clientSurnameFieldKey] ? (
+                                  <SaveIcon
+                                    className="w-4 h-4 fill-base-content"
+                                    unique_id={`save_client_surname_field_${h.unit_number}`}
+                                  />
+                                ) : (
+                                  <EditIcon className="w-4 h-4 fill-base-content" />
+                                )}
+                              </button>
                             </div>
 
                             <div className="flex join">
@@ -157,42 +270,229 @@ const HouseManager = ({ className = "className" }) => {
                                   disabled={
                                     !editingField[clientContactNumberFieldKey]
                                   }
-                                  placeholder="Contact number"
+                                  value={
+                                    fieldValues[clientContactNumberFieldKey] ??
+                                    h.client_contact_number
+                                  }
+                                  onChange={(e) =>
+                                    setFieldValues((prev) => ({
+                                      ...prev,
+                                      [clientContactNumberFieldKey]:
+                                        e.target.value,
+                                    }))
+                                  }
                                   pattern="[0-9]*"
                                   minLength="10"
                                   maxLength="10"
-                                  defaultValue={h.client_contact_number}
                                 />
                               </label>
-                              <label className="swap btn join-item focus-within:outline-0">
-                                <input type="checkbox" />
-                                <div
-                                  className="swap-on"
-                                  onClick={() =>
+                              <button
+                                className="btn join-item focus-within:outline-0"
+                                disabled={
+                                  savingField === clientContactNumberFieldKey
+                                }
+                                onClick={() => {
+                                  if (
+                                    editingField[clientContactNumberFieldKey]
+                                  ) {
+                                    handleSaveEntity(
+                                      updateHouse,
+                                      updateHouseLocal,
+                                      h.id,
+                                      clientContactNumberFieldKey,
+                                      fieldValues[clientContactNumberFieldKey],
+                                      "contact number",
+                                    );
+                                  } else {
                                     setEditingField((prev) => ({
                                       ...prev,
                                       [clientContactNumberFieldKey]: true,
-                                    }))
+                                    }));
                                   }
-                                >
-                                  <EditIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                                <div
-                                  className="swap-off"
-                                  onClick={() =>
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [clientContactNumberFieldKey]: false,
-                                    }))
-                                  }
-                                >
-                                  <SaveIcon className="z-10 w-4 h-4 fill-base-content" />
-                                </div>
-                              </label>
+                                }}
+                              >
+                                {savingField === clientContactNumberFieldKey ? (
+                                  <span className="loading loading-spinner text-current" />
+                                ) : editingField[
+                                    clientContactNumberFieldKey
+                                  ] ? (
+                                  <SaveIcon
+                                    className="w-4 h-4 fill-base-content"
+                                    unique_id={`save_contact_number_field_${h.unit_number}`}
+                                  />
+                                ) : (
+                                  <EditIcon className="w-4 h-4 fill-base-content" />
+                                )}
+                              </button>
                             </div>
                           </div>
                         </section>
-                        <div className="divider"></div>
+
+                        <section className="">
+                          <div className="divider text-sm my-6">
+                            AREAS AND SURFACES
+                          </div>
+                          <div className="flex justify-between items-center w-full mb-6">
+                            <div className="font-semibold text-sm">Areas</div>
+                            <button
+                              className="btn btn-sm focus-within:outline-0"
+                              disabled={creatingAreaId === h.id}
+                              onClick={() => {
+                                document
+                                  .getElementById(
+                                    `unit_number_${h.unit_number}_add_area_modal`,
+                                  )
+                                  .showModal();
+                              }}
+                            >
+                              {creatingAreaId === h.id ? (
+                                <span className="loading loading-spinner text-current" />
+                              ) : (
+                                "Add Area"
+                              )}
+                            </button>
+                            <dialog
+                              id={`unit_number_${h.unit_number}_add_area_modal`}
+                              className="modal modal-middle"
+                            >
+                              <div className="modal-box">
+                                <h3 className="font-bold text-lg mb-6">
+                                  Provide new area name:
+                                </h3>
+                                <label className="input floating-label validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                  <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                    Area name
+                                  </span>
+                                  <input
+                                    className=""
+                                    placeholder="Area name"
+                                    type="text"
+                                    required
+                                  />
+                                </label>
+                                <div className="modal-action flex justify-end gap-y-4">
+                                  <form method="dialog">
+                                    {/* if there is a button in form, it will close the modal */}
+                                    <button className="btn text-error">
+                                      Cancel
+                                    </button>
+                                  </form>
+                                  <form method="dialog">
+                                    {/* if there is a button in form, it will close the modal */}
+                                    <button
+                                      className="btn"
+                                      onClick={() => {
+                                        handleAddArea(h.id);
+                                      }}
+                                    >
+                                      Add
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                            </dialog>
+                          </div>
+
+                          <div className="">
+                            {h.allAreas.map((area) => {
+                              const areaNameFieldKey = `${area.id}_name`;
+                              return (
+                                <div
+                                  className="collapse collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
+                                  key={area.id}
+                                >
+                                  <input type="checkbox" className="peer" />
+                                  <div className="collapse-title font-semibold after:inset-s-5 after:inset-e-auto pe-4 ps-12">
+                                    {area.name}
+                                  </div>
+                                  <div className="collapse-content z-1">
+                                    <div className="">
+                                      <div className="flex join">
+                                        <label className="input join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                          <input
+                                            type="text"
+                                            className=""
+                                            required
+                                            disabled={
+                                              !editingField[areaNameFieldKey]
+                                            }
+                                            value={
+                                              fieldValues[areaNameFieldKey] ??
+                                              area.name
+                                            }
+                                            onChange={(e) =>
+                                              setFieldValues((prev) => ({
+                                                ...prev,
+                                                [areaNameFieldKey]:
+                                                  e.target.value,
+                                              }))
+                                            }
+                                          />
+                                        </label>
+                                        <button
+                                          className="btn join-item focus-within:outline-0"
+                                          disabled={
+                                            savingField === areaNameFieldKey
+                                          }
+                                          onClick={() => {
+                                            if (
+                                              editingField[areaNameFieldKey]
+                                            ) {
+                                              handleSaveEntity(
+                                                updateArea,
+                                                updateAreaLocal,
+                                                area.id,
+                                                areaNameFieldKey,
+                                                fieldValues[areaNameFieldKey],
+                                                "area name",
+                                              );
+                                            } else {
+                                              setEditingField((prev) => ({
+                                                ...prev,
+                                                [areaNameFieldKey]: true,
+                                              }));
+                                            }
+                                          }}
+                                        >
+                                          {savingField === areaNameFieldKey ? (
+                                            <span className="loading loading-spinner text-current" />
+                                          ) : editingField[areaNameFieldKey] ? (
+                                            <SaveIcon
+                                              className="w-4 h-4 fill-base-content"
+                                              unique_id={`save_unit_${h.unit_number}_area_name_field_${area.id}`}
+                                            />
+                                          ) : (
+                                            <EditIcon className="w-4 h-4 fill-base-content" />
+                                          )}
+                                        </button>
+                                      </div>
+
+                                      <div className="flex justify-between items-center w-full my-6">
+                                        <div className="font-semibold text-sm">
+                                          Surfaces
+                                        </div>
+                                        <button className="btn btn-sm focus-within:outline-0">
+                                          Add Surface
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-end items-center w-full mb-6">
+                                      <button className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4">
+                                        <span className="text-error-content">
+                                          Delete Area
+                                        </span>
+                                        <DeleteIcon
+                                          area_id={area.id}
+                                          className="w-4 h-4 fill-error-content"
+                                        />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
                       </div>
                     </div>
                   );

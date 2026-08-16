@@ -8,7 +8,7 @@ const EditIcon = ({ className = "" }) => {
         viewBox="0 0 16 16"
         version="1.1"
         id="svg2"
-        xmlspace="preserve"
+        xmlSpace="preserve"
         xmlns="http://www.w3.org/2000/svg"
         xmlnssvg="http://www.w3.org/2000/svg"
       >
