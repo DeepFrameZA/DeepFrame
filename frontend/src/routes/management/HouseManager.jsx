@@ -54,6 +54,9 @@ const HouseManager = ({ className = "className" }) => {
         area.allSurfaces.forEach((surface) => {
           initial[`${surface.id}_name`] = surface.name;
           initial[`${surface.id}_selected_tile`] = surface.selected_tile;
+          initial[`${surface.id}_length`] = surface.surface_length;
+          initial[`${surface.id}_width`] = surface.surface_width;
+          initial[`${surface.id}_height`] = surface.surface_height;
         });
       });
     });
@@ -61,6 +64,14 @@ const HouseManager = ({ className = "className" }) => {
     setFieldValues(initial);
   }, [houses]);
 
+  // OPTIMISTIC UPDATE, NO REFETCH (by design).
+  // After a successful save we update only local state fields (fieldValues /
+  // editingField) and never re-query the server. The only server-computed
+  // column is `updated_at`, which is not rendered in the UI, so a refetch would
+  // add latency + bandwidth for hidden data — conflicting with the site's speed
+  // goal (no unnecessary refreshes). Local state already mirrors exactly what
+  // was saved for every visible field. Revisit only if a server-computed field
+  // becomes visible or multi-user concurrent editing is introduced.
   const handleSaveEntity = async (
     updateFn,
     updateLocalFn,
@@ -622,7 +633,9 @@ const HouseManager = ({ className = "className" }) => {
                                         </div>
                                         <button
                                           className="btn btn-sm focus-within:outline-0"
-                                          disabled={creatingSurfaceId === area.id}
+                                          disabled={
+                                            creatingSurfaceId === area.id
+                                          }
                                           onClick={() => {
                                             setActiveSurfaceAreaId(area.id);
                                             setNewSurfaceName("");
@@ -664,7 +677,9 @@ const HouseManager = ({ className = "className" }) => {
                                                   : ""
                                               }
                                               onChange={(e) =>
-                                                setNewSurfaceName(e.target.value)
+                                                setNewSurfaceName(
+                                                  e.target.value,
+                                                )
                                               }
                                             />
                                           </label>
@@ -698,9 +713,9 @@ const HouseManager = ({ className = "className" }) => {
                                         {area.allSurfaces.map((surface) => {
                                           const surfaceNameFieldKey = `${surface.id}_name`;
                                           const surfaceSelectedTileFieldKey = `${surface.id}_selected_tile`;
-                                          const surfaceLengthFieldKey = `${surface.id}_length`;
-                                          const surfaceWidthFieldKey = `${surface.id}_width`;
-                                          const surfaceHeightFieldKey = `${surface.id}_height`;
+                                          const surfaceLengthFieldKey = `${surface.id}_surface_length`;
+                                          const surfaceWidthFieldKey = `${surface.id}_surface_width`;
+                                          const surfaceHeightFieldKey = `${surface.id}_surface_height`;
                                           return (
                                             <div
                                               className="collapse first:collapse-open collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
@@ -751,46 +766,46 @@ const HouseManager = ({ className = "className" }) => {
                                                         savingField ===
                                                         surfaceNameFieldKey
                                                       }
-                                                        onClick={() => {
-                                                          if (
-                                                            editingField[
+                                                      onClick={() => {
+                                                        if (
+                                                          editingField[
+                                                            surfaceNameFieldKey
+                                                          ]
+                                                        ) {
+                                                          const nameValue =
+                                                            fieldValues[
                                                               surfaceNameFieldKey
-                                                            ]
-                                                          ) {
-                                                            const nameValue =
-                                                              fieldValues[
-                                                                surfaceNameFieldKey
-                                                              ];
-                                                            const nameToSave =
-                                                              nameValue &&
-                              nameValue.trim()
-                                                                ? nameValue
-                                                                : surface.name;
-                                                            handleSaveEntity(
-                                                              updateSurface,
-                                                              updateSurfaceLocal,
-                                                              surface.id,
-                                                              surfaceNameFieldKey,
-                                                              nameToSave,
-                                                              "surface name",
-                                                              [h.id, area.id],
-                                                            );
-                                                          } else {
-                                                            setFieldValues(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [surfaceNameFieldKey]:
-                                                                  "",
-                                                              }),
-                                                            );
-                                                            setEditingField(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [surfaceNameFieldKey]: true,
-                                                              }),
-                                                            );
-                                                          }
-                                                        }}
+                                                            ];
+                                                          const nameToSave =
+                                                            nameValue &&
+                                                            nameValue.trim()
+                                                              ? nameValue
+                                                              : surface.name;
+                                                          handleSaveEntity(
+                                                            updateSurface,
+                                                            updateSurfaceLocal,
+                                                            surface.id,
+                                                            surfaceNameFieldKey,
+                                                            nameToSave,
+                                                            "surface name",
+                                                            [h.id, area.id],
+                                                          );
+                                                        } else {
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceNameFieldKey]:
+                                                                "",
+                                                            }),
+                                                          );
+                                                          setEditingField(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceNameFieldKey]: true,
+                                                            }),
+                                                          );
+                                                        }
+                                                      }}
                                                     >
                                                       {savingField ===
                                                       surfaceNameFieldKey ? (
@@ -809,6 +824,15 @@ const HouseManager = ({ className = "className" }) => {
                                                   </div>
 
                                                   <div className="flex join py-2">
+                                                    {/*
+                                                      selected_tile: local state intentionally stores the FULL tile
+                                                      object (shape matches the `selected_tile(*)` join result), while
+                                                      the DB column `surfaces.selected_tile` is a text FK to
+                                                      `tiles(sku)`. The split is bridged in handleSaveEntity via the
+                                                      `remoteValue` arg: the sku string is sent to the server while the
+                                                      object is kept in local state. Keep these in sync if the tile
+                                                      object shape changes.
+                                                    */}
                                                     <TileCombobox
                                                       key={
                                                         editingField[
@@ -892,6 +916,288 @@ const HouseManager = ({ className = "className" }) => {
                                                       )}
                                                     </button>
                                                   </div>
+
+                                                  <div className="flex join py-2">
+                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                                        Surface length
+                                                      </span>
+                                                      <input
+                                                        type="text"
+                                                        placeholder="Surface length"
+                                                        className=""
+                                                        disabled={
+                                                          !editingField[
+                                                            surfaceLengthFieldKey
+                                                          ]
+                                                        }
+                                                        value={
+                                                          fieldValues[
+                                                            surfaceLengthFieldKey
+                                                          ] ??
+                                                          surface.surface_length
+                                                        }
+                                                        onChange={(e) =>
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceLengthFieldKey]:
+                                                                e.target.value,
+                                                            }),
+                                                          )
+                                                        }
+                                                      />
+                                                    </label>
+                                                    <button
+                                                      className="btn join-item focus-within:outline-0"
+                                                      disabled={
+                                                        savingField ===
+                                                        surfaceLengthFieldKey
+                                                      }
+                                                      onClick={() => {
+                                                        if (
+                                                          editingField[
+                                                            surfaceLengthFieldKey
+                                                          ]
+                                                        ) {
+                                                          const lengthValue =
+                                                            fieldValues[
+                                                              surfaceLengthFieldKey
+                                                            ];
+                                                          const lengthToSave =
+                                                            lengthValue &&
+                                                            lengthValue.trim()
+                                                              ? lengthValue
+                                                              : surface.surface_length;
+                                                          handleSaveEntity(
+                                                            updateSurface,
+                                                            updateSurfaceLocal,
+                                                            surface.id,
+                                                            surfaceLengthFieldKey,
+                                                            lengthToSave,
+                                                            "Surface length",
+                                                            [h.id, area.id],
+                                                          );
+                                                        } else {
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceLengthFieldKey]:
+                                                                "",
+                                                            }),
+                                                          );
+                                                          setEditingField(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceLengthFieldKey]: true,
+                                                            }),
+                                                          );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {savingField ===
+                                                      surfaceLengthFieldKey ? (
+                                                        <span className="loading loading-spinner text-current" />
+                                                      ) : editingField[
+                                                          surfaceLengthFieldKey
+                                                        ] ? (
+                                                        <SaveIcon
+                                                          className="w-4 h-4 fill-base-content"
+                                                          unique_id={`save_unit_${h.unit_number}_surface_length_field_${surface.id}`}
+                                                        />
+                                                      ) : (
+                                                        <EditIcon className="w-4 h-4 fill-base-content" />
+                                                      )}
+                                                    </button>
+                                                  </div>
+
+                                                  <div className="flex join py-2">
+                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                                        Surface width
+                                                      </span>
+                                                      <input
+                                                        type="text"
+                                                        placeholder="Surface width"
+                                                        className=""
+                                                        disabled={
+                                                          !editingField[
+                                                            surfaceWidthFieldKey
+                                                          ]
+                                                        }
+                                                        value={
+                                                          fieldValues[
+                                                            surfaceWidthFieldKey
+                                                          ] ??
+                                                          surface.surface_width
+                                                        }
+                                                        onChange={(e) =>
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceWidthFieldKey]:
+                                                                e.target.value,
+                                                            }),
+                                                          )
+                                                        }
+                                                      />
+                                                    </label>
+                                                    <button
+                                                      className="btn join-item focus-within:outline-0"
+                                                      disabled={
+                                                        savingField ===
+                                                        surfaceWidthFieldKey
+                                                      }
+                                                      onClick={() => {
+                                                        if (
+                                                          editingField[
+                                                            surfaceWidthFieldKey
+                                                          ]
+                                                        ) {
+                                                          const widthValue =
+                                                            fieldValues[
+                                                              surfaceWidthFieldKey
+                                                            ];
+                                                          const widthToSave =
+                                                            widthValue &&
+                                                            widthValue.trim()
+                                                              ? widthValue
+                                                              : surface.surface_width;
+                                                          handleSaveEntity(
+                                                            updateSurface,
+                                                            updateSurfaceLocal,
+                                                            surface.id,
+                                                            surfaceWidthFieldKey,
+                                                            widthToSave,
+                                                            "Surface width",
+                                                            [h.id, area.id],
+                                                          );
+                                                        } else {
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceWidthFieldKey]:
+                                                                "",
+                                                            }),
+                                                          );
+                                                          setEditingField(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceWidthFieldKey]: true,
+                                                            }),
+                                                          );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {savingField ===
+                                                      surfaceWidthFieldKey ? (
+                                                        <span className="loading loading-spinner text-current" />
+                                                      ) : editingField[
+                                                          surfaceWidthFieldKey
+                                                        ] ? (
+                                                        <SaveIcon
+                                                          className="w-4 h-4 fill-base-content"
+                                                          unique_id={`save_unit_${h.unit_number}_surface_width_field_${surface.id}`}
+                                                        />
+                                                      ) : (
+                                                        <EditIcon className="w-4 h-4 fill-base-content" />
+                                                      )}
+                                                    </button>
+                                                  </div>
+
+                                                  <div className="flex join py-2">
+                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                                        Surface height
+                                                      </span>
+                                                      <input
+                                                        type="text"
+                                                        placeholder="Surface height"
+                                                        className=""
+                                                        disabled={
+                                                          !editingField[
+                                                            surfaceHeightFieldKey
+                                                          ]
+                                                        }
+                                                        value={
+                                                          fieldValues[
+                                                            surfaceHeightFieldKey
+                                                          ] ??
+                                                          surface.surface_height
+                                                        }
+                                                        onChange={(e) =>
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceHeightFieldKey]:
+                                                                e.target.value,
+                                                            }),
+                                                          )
+                                                        }
+                                                      />
+                                                    </label>
+                                                    <button
+                                                      className="btn join-item focus-within:outline-0"
+                                                      disabled={
+                                                        savingField ===
+                                                        surfaceHeightFieldKey
+                                                      }
+                                                      onClick={() => {
+                                                        if (
+                                                          editingField[
+                                                            surfaceHeightFieldKey
+                                                          ]
+                                                        ) {
+                                                          const heightValue =
+                                                            fieldValues[
+                                                              surfaceHeightFieldKey
+                                                            ];
+                                                          const heightToSave =
+                                                            heightValue &&
+                                                            heightValue.trim()
+                                                              ? heightValue
+                                                              : surface.surface_height;
+                                                          handleSaveEntity(
+                                                            updateSurface,
+                                                            updateSurfaceLocal,
+                                                            surface.id,
+                                                            surfaceHeightFieldKey,
+                                                            heightToSave,
+                                                            "Surface height",
+                                                            [h.id, area.id],
+                                                          );
+                                                        } else {
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceHeightFieldKey]:
+                                                                "",
+                                                            }),
+                                                          );
+                                                          setEditingField(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceHeightFieldKey]: true,
+                                                            }),
+                                                          );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {savingField ===
+                                                      surfaceHeightFieldKey ? (
+                                                        <span className="loading loading-spinner text-current" />
+                                                      ) : editingField[
+                                                          surfaceHeightFieldKey
+                                                        ] ? (
+                                                        <SaveIcon
+                                                          className="w-4 h-4 fill-base-content"
+                                                          unique_id={`save_unit_${h.unit_number}_surface_height_field_${surface.id}`}
+                                                        />
+                                                      ) : (
+                                                        <EditIcon className="w-4 h-4 fill-base-content" />
+                                                      )}
+                                                    </button>
+                                                  </div>
                                                 </div>
 
                                                 <div className="divider text-sm"></div>
@@ -958,7 +1264,9 @@ const HouseManager = ({ className = "className" }) => {
                                                             Confirm
                                                           </span>
                                                           <DeleteIcon
-                                                            unique_id={surface.id}
+                                                            unique_id={
+                                                              surface.id
+                                                            }
                                                             className="w-4 h-4 fill-error-content"
                                                           />
                                                         </button>
@@ -1129,7 +1437,76 @@ const HouseManager = ({ className = "className" }) => {
               role="button"
             />
             <div className="tab-content bg-base-100 border-base-300 p-6">
-              <div className="flex justify-center">Create New house</div>
+              <div className="flex justify-center text-lg font-semibold my-6">
+                Create New house
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-4">
+                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                  <span className="dark:text-[#414342] text-[#d2d2d2]">
+                    Unit number
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Unit number"
+                    className=""
+                    required
+                  />
+                </label>
+
+                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                  <span className="dark:text-[#414342] text-[#d2d2d2]">
+                    Client surname
+                  </span>
+
+                  <input
+                    type="text"
+                    placeholder="Client surname"
+                    className=""
+                    required
+                  />
+                </label>
+
+                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                  <span className="dark:text-[#414342] text-[#d2d2d2]">
+                    Client contact number
+                  </span>
+                  <svg
+                    className="h-[1em] opacity-50"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                  >
+                    <g fill="none">
+                      <path
+                        d="M7.25 11.5C6.83579 11.5 6.5 11.8358 6.5 12.25C6.5 12.6642 6.83579 13 7.25 13H8.75C9.16421 13 9.5 12.6642 9.5 12.25C9.5 11.8358 9.16421 11.5 8.75 11.5H7.25Z"
+                        fill="currentColor"
+                      ></path>
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M6 1C4.61929 1 3.5 2.11929 3.5 3.5V12.5C3.5 13.8807 4.61929 15 6 15H10C11.3807 15 12.5 13.8807 12.5 12.5V3.5C12.5 2.11929 11.3807 1 10 1H6ZM10 2.5H9.5V3C9.5 3.27614 9.27614 3.5 9 3.5H7C6.72386 3.5 6.5 3.27614 6.5 3V2.5H6C5.44771 2.5 5 2.94772 5 3.5V12.5C5 13.0523 5.44772 13.5 6 13.5H10C10.5523 13.5 11 13.0523 11 12.5V3.5C11 2.94772 10.5523 2.5 10 2.5Z"
+                        fill="currentColor"
+                      ></path>
+                    </g>
+                  </svg>
+
+                  <input
+                    type="tel"
+                    placeholder="Client contact number"
+                    className=""
+                    required
+                    pattern="[0-9]*"
+                    minLength="10"
+                    maxLength="10"
+                  />
+                </label>
+              </div>
+
+              <div className="flex justify-end items-center w-full mt-6 mb-2">
+                <button className="btn focus-within:outline-0 flex gap-y-4">
+                  <span className="">Create</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

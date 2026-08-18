@@ -1,4 +1,4 @@
-import { supabase } from "../hooks/supabase/supabase";
+import { supabase } from "../supabase/supabase";
 
 export async function getTiles() {
   const { data, error } = await supabase.from("tiles").select("*");
@@ -24,11 +24,17 @@ export async function searchTiles(filters = {}) {
     query = query.ilike("description", `%${filters.description}%`);
   }
 
-  if (filters.minPrice) {
-    query = query.gte("price", filters.minPrice);
+  if (filters.minPricePerSqm) {
+    query = query.gte("price_per_sqm", filters.minPricePerSqm);
   }
-  if (filters.maxPrice) {
-    query = query.lte("price", filters.maxPrice);
+  if (filters.maxPricePerSqm) {
+    query = query.lte("price_per_sqm", filters.maxPricePerSqm);
+  }
+  if (filters.minPricePerBox) {
+    query = query.gte("price_per_box", filters.minPricePerBox);
+  }
+  if (filters.maxPricePerBox) {
+    query = query.lte("price_per_box", filters.maxPricePerBox);
   }
 
   if (filters.sku) {
