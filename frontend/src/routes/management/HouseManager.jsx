@@ -2,24 +2,46 @@ import { useState, useEffect } from "react";
 import SearchBar from "../../components/SearchBar";
 import { useHouses } from "../../core/HouseContext";
 import {
+  createHouse,
+  createArea,
+  createSurface,
   updateHouse,
   updateArea,
-  createArea,
+  updateSurface,
+  deleteHouse,
+  deleteArea,
+  deleteSurface,
 } from "../../core/services/houseService";
 import EditIcon from "../../components/EditIcon";
 import SaveIcon from "../../components/SaveIcon";
 import DeleteIcon from "../../components/DeleteIcon";
+import TileCombobox from "../../components/TileCombobox";
 import toast from "react-hot-toast";
 
 const HouseManager = ({ className = "className" }) => {
-  const { houses, updateHouseLocal, updateAreaLocal, addAreaLocal } =
-    useHouses();
+  const {
+    houses,
+    updateHouseLocal,
+    updateAreaLocal,
+    addAreaLocal,
+    deleteHouseLocal,
+    deleteAreaLocal,
+    updateSurfaceLocal,
+    addSurfaceLocal,
+    deleteSurfaceLocal,
+    tilesCatalog,
+    tilesCatalogLoaded,
+    ensureTilesCatalog,
+  } = useHouses();
   const [editingField, setEditingField] = useState({});
   const [fieldValues, setFieldValues] = useState({});
   const [savingField, setSavingField] = useState(null);
   const [creatingAreaId, setCreatingAreaId] = useState(null);
   const [newAreaName, setNewAreaName] = useState("");
   const [activeHouseId, setActiveHouseId] = useState(null);
+  const [creatingSurfaceId, setCreatingSurfaceId] = useState(null);
+  const [activeSurfaceAreaId, setActiveSurfaceAreaId] = useState(null);
+  const [newSurfaceName, setNewSurfaceName] = useState("");
 
   useEffect(() => {
     const initial = {};
@@ -29,6 +51,10 @@ const HouseManager = ({ className = "className" }) => {
       initial[`${h.id}_client_contact_number`] = h.client_contact_number;
       h.allAreas.forEach((area) => {
         initial[`${area.id}_name`] = area.name;
+        area.allSurfaces.forEach((surface) => {
+          initial[`${surface.id}_name`] = surface.name;
+          initial[`${surface.id}_selected_tile`] = surface.selected_tile;
+        });
       });
     });
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -42,14 +68,18 @@ const HouseManager = ({ className = "className" }) => {
     fieldKey,
     newValue,
     displayName,
+    parentIds = [],
+    remoteValue = newValue,
   ) => {
     const fieldName = fieldKey.split("_").slice(1).join("_");
     const oldValue = fieldValues[fieldKey];
 
     setSavingField(fieldKey);
-    updateLocalFn(entityId, { [fieldName]: newValue });
 
-    const savePromise = updateFn(entityId, { [fieldName]: newValue });
+    const localArgs = [...parentIds, entityId, { [fieldName]: newValue }];
+    updateLocalFn(...localArgs);
+
+    const savePromise = updateFn(entityId, { [fieldName]: remoteValue });
 
     try {
       await toast.promise(savePromise, {
@@ -57,10 +87,11 @@ const HouseManager = ({ className = "className" }) => {
         success: `${displayName} saved!`,
         error: (err) => err?.message ?? "Save failed",
       });
+      setFieldValues((prev) => ({ ...prev, [fieldKey]: newValue }));
       setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
     } catch (error) {
       console.error("Save failed:", error);
-      updateLocalFn(entityId, { [fieldName]: oldValue });
+      updateLocalFn(...[...parentIds, entityId, { [fieldName]: oldValue }]);
       setFieldValues((prev) => ({ ...prev, [fieldKey]: oldValue }));
       setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
     } finally {
@@ -96,6 +127,85 @@ const HouseManager = ({ className = "className" }) => {
       console.error("Create area failed:", error);
     } finally {
       setCreatingAreaId(null);
+    }
+  };
+
+  const submitDeleteArea = async (houseId, areaId, areaName) => {
+    const deletePromise = deleteArea(areaId);
+
+    try {
+      await toast.promise(deletePromise, {
+        loading: `Deleting area ${areaName}...`,
+        success: "Area deleted!",
+        error: (err) => err?.message ?? "Delete failed",
+      });
+      deleteAreaLocal(houseId, areaId);
+    } catch (error) {
+      console.error("Delete area failed:", error);
+    }
+  };
+
+  const submitDeleteSurface = async (
+    houseId,
+    areaId,
+    surfaceId,
+    surfaceName,
+  ) => {
+    const deletePromise = deleteSurface(surfaceId);
+
+    try {
+      await toast.promise(deletePromise, {
+        loading: `Deleting surface ${surfaceName}...`,
+        success: "Surface deleted!",
+        error: (err) => err?.message ?? "Delete failed",
+      });
+      deleteSurfaceLocal(houseId, areaId, surfaceId);
+    } catch (error) {
+      console.error("Delete surface failed:", error);
+    }
+  };
+
+  const submitAddSurface = async (houseId, areaId) => {
+    if (!newSurfaceName.trim()) {
+      toast.error("Please provide a surface name");
+      return;
+    }
+
+    setCreatingSurfaceId(areaId);
+    const surfaceData = { area_id: areaId, name: newSurfaceName.trim() };
+    const createPromise = createSurface(surfaceData);
+
+    try {
+      const newSurface = await toast.promise(createPromise, {
+        loading: "Creating surface...",
+        success: "Surface created!",
+        error: (err) => err?.message ?? "Create failed",
+      });
+
+      addSurfaceLocal(houseId, areaId, newSurface);
+
+      const modal = document.getElementById(`add_surface_modal_${areaId}`);
+      modal?.close();
+      setNewSurfaceName("");
+    } catch (error) {
+      console.error("Create surface failed:", error);
+    } finally {
+      setCreatingSurfaceId(null);
+    }
+  };
+
+  const submitDeleteHouse = async (id, unitNumber) => {
+    const deletePromise = deleteHouse(id);
+
+    try {
+      await toast.promise(deletePromise, {
+        loading: `Deleting house ${unitNumber}...`,
+        success: "House deleted!",
+        error: (err) => err?.message ?? "Delete failed",
+      });
+      deleteHouseLocal(id);
+    } catch (error) {
+      console.error("Delete house failed:", error);
     }
   };
 
@@ -140,16 +250,20 @@ const HouseManager = ({ className = "className" }) => {
                         {h.unit_number}
                       </div>
                       <div className="collapse-content z-1">
-                        <section className="">
+                        <div className="">
                           <div className="flex justify-center font-semibold text-sm mb-6">
                             GENERAL INFORMATION
                           </div>
 
                           <div className="flex flex-wrap justify-center gap-4">
                             <div className="flex join">
-                              <label className="input join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                  Unit number
+                                </span>
                                 <input
                                   type="text"
+                                  placeholder="Unit number"
                                   className=""
                                   required
                                   disabled={!editingField[unitNumberFieldKey]}
@@ -200,9 +314,14 @@ const HouseManager = ({ className = "className" }) => {
                             </div>
 
                             <div className="flex join">
-                              <label className="input join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                  Client surname
+                                </span>
+
                                 <input
                                   type="text"
+                                  placeholder="Client surname"
                                   className=""
                                   required
                                   disabled={
@@ -255,7 +374,10 @@ const HouseManager = ({ className = "className" }) => {
                             </div>
 
                             <div className="flex join">
-                              <label className="input join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                  Client contact number
+                                </span>
                                 <svg
                                   className="h-[1em] opacity-50"
                                   xmlns="http://www.w3.org/2000/svg"
@@ -277,6 +399,7 @@ const HouseManager = ({ className = "className" }) => {
 
                                 <input
                                   type="tel"
+                                  placeholder="Client contact number"
                                   className=""
                                   required
                                   disabled={
@@ -338,9 +461,9 @@ const HouseManager = ({ className = "className" }) => {
                               </button>
                             </div>
                           </div>
-                        </section>
+                        </div>
 
-                        <section className="">
+                        <div className="">
                           <div className="divider text-sm my-6">
                             AREAS AND SURFACES
                           </div>
@@ -420,7 +543,7 @@ const HouseManager = ({ className = "className" }) => {
                               const areaNameFieldKey = `${area.id}_name`;
                               return (
                                 <div
-                                  className="collapse collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
+                                  className="collapse first:collapse-open collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
                                   key={area.id}
                                 >
                                   <input type="checkbox" className="peer" />
@@ -429,10 +552,14 @@ const HouseManager = ({ className = "className" }) => {
                                   </div>
                                   <div className="collapse-content z-1">
                                     <div className="">
-                                      <div className="flex join">
-                                        <label className="input join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                      <div className="flex join py-2">
+                                        <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                          <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                            Area name
+                                          </span>
                                           <input
                                             type="text"
+                                            placeholder="Area name"
                                             className=""
                                             required
                                             disabled={
@@ -493,12 +620,361 @@ const HouseManager = ({ className = "className" }) => {
                                         <div className="font-semibold text-sm">
                                           Surfaces
                                         </div>
-                                        <button className="btn btn-sm focus-within:outline-0">
-                                          Add Surface
+                                        <button
+                                          className="btn btn-sm focus-within:outline-0"
+                                          disabled={creatingSurfaceId === area.id}
+                                          onClick={() => {
+                                            setActiveSurfaceAreaId(area.id);
+                                            setNewSurfaceName("");
+                                            document
+                                              .getElementById(
+                                                `add_surface_modal_${area.id}`,
+                                              )
+                                              ?.showModal();
+                                          }}
+                                        >
+                                          {creatingSurfaceId === area.id ? (
+                                            <span className="loading loading-spinner text-current" />
+                                          ) : (
+                                            "Add Surface"
+                                          )}
                                         </button>
                                       </div>
+
+                                      <dialog
+                                        id={`add_surface_modal_${area.id}`}
+                                        className="modal modal-middle"
+                                      >
+                                        <div className="modal-box">
+                                          <h3 className="font-bold text-lg mb-6">
+                                            Provide new surface name:
+                                          </h3>
+                                          <label className="input floating-label validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                            <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                              Surface name
+                                            </span>
+                                            <input
+                                              className=""
+                                              placeholder="Surface name"
+                                              type="text"
+                                              required
+                                              value={
+                                                activeSurfaceAreaId === area.id
+                                                  ? newSurfaceName
+                                                  : ""
+                                              }
+                                              onChange={(e) =>
+                                                setNewSurfaceName(e.target.value)
+                                              }
+                                            />
+                                          </label>
+                                          <div className="modal-action flex justify-end gap-y-4">
+                                            <form method="dialog">
+                                              <button className="btn text-error">
+                                                Cancel
+                                              </button>
+                                            </form>
+                                            <button
+                                              className="btn"
+                                              disabled={
+                                                creatingSurfaceId === area.id
+                                              }
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                submitAddSurface(h.id, area.id);
+                                              }}
+                                            >
+                                              {creatingSurfaceId === area.id ? (
+                                                <span className="loading loading-spinner text-current" />
+                                              ) : (
+                                                "Add"
+                                              )}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </dialog>
+
+                                      <div className="">
+                                        {area.allSurfaces.map((surface) => {
+                                          const surfaceNameFieldKey = `${surface.id}_name`;
+                                          const surfaceSelectedTileFieldKey = `${surface.id}_selected_tile`;
+                                          const surfaceLengthFieldKey = `${surface.id}_length`;
+                                          const surfaceWidthFieldKey = `${surface.id}_width`;
+                                          const surfaceHeightFieldKey = `${surface.id}_height`;
+                                          return (
+                                            <div
+                                              className="collapse first:collapse-open collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
+                                              key={surface.id}
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                className="peer"
+                                              />
+                                              <div className="collapse-title font-semibold after:inset-s-5 after:inset-e-auto pe-4 ps-12">
+                                                {surface.name}
+                                              </div>
+                                              <div className="collapse-content z-1">
+                                                <div className="flex flex-wrap gap-4 grow-0">
+                                                  <div className="flex join py-2">
+                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
+                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
+                                                        Surface name
+                                                      </span>
+                                                      <input
+                                                        type="text"
+                                                        placeholder="Surface name"
+                                                        className=""
+                                                        disabled={
+                                                          !editingField[
+                                                            surfaceNameFieldKey
+                                                          ]
+                                                        }
+                                                        value={
+                                                          fieldValues[
+                                                            surfaceNameFieldKey
+                                                          ] ?? surface.name
+                                                        }
+                                                        onChange={(e) =>
+                                                          setFieldValues(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceNameFieldKey]:
+                                                                e.target.value,
+                                                            }),
+                                                          )
+                                                        }
+                                                      />
+                                                    </label>
+                                                    <button
+                                                      className="btn join-item focus-within:outline-0"
+                                                      disabled={
+                                                        savingField ===
+                                                        surfaceNameFieldKey
+                                                      }
+                                                        onClick={() => {
+                                                          if (
+                                                            editingField[
+                                                              surfaceNameFieldKey
+                                                            ]
+                                                          ) {
+                                                            const nameValue =
+                                                              fieldValues[
+                                                                surfaceNameFieldKey
+                                                              ];
+                                                            const nameToSave =
+                                                              nameValue &&
+                              nameValue.trim()
+                                                                ? nameValue
+                                                                : surface.name;
+                                                            handleSaveEntity(
+                                                              updateSurface,
+                                                              updateSurfaceLocal,
+                                                              surface.id,
+                                                              surfaceNameFieldKey,
+                                                              nameToSave,
+                                                              "surface name",
+                                                              [h.id, area.id],
+                                                            );
+                                                          } else {
+                                                            setFieldValues(
+                                                              (prev) => ({
+                                                                ...prev,
+                                                                [surfaceNameFieldKey]:
+                                                                  "",
+                                                              }),
+                                                            );
+                                                            setEditingField(
+                                                              (prev) => ({
+                                                                ...prev,
+                                                                [surfaceNameFieldKey]: true,
+                                                              }),
+                                                            );
+                                                          }
+                                                        }}
+                                                    >
+                                                      {savingField ===
+                                                      surfaceNameFieldKey ? (
+                                                        <span className="loading loading-spinner text-current" />
+                                                      ) : editingField[
+                                                          surfaceNameFieldKey
+                                                        ] ? (
+                                                        <SaveIcon
+                                                          className="w-4 h-4 fill-base-content"
+                                                          unique_id={`save_unit_${h.unit_number}_surface_name_field_${surface.id}`}
+                                                        />
+                                                      ) : (
+                                                        <EditIcon className="w-4 h-4 fill-base-content" />
+                                                      )}
+                                                    </button>
+                                                  </div>
+
+                                                  <div className="flex join py-2">
+                                                    <TileCombobox
+                                                      key={
+                                                        editingField[
+                                                          surfaceSelectedTileFieldKey
+                                                        ]
+                                                          ? `edit_${surface.id}`
+                                                          : `view_${surface.id}`
+                                                      }
+                                                      catalog={tilesCatalog}
+                                                      loading={
+                                                        !tilesCatalogLoaded
+                                                      }
+                                                      disabled={
+                                                        !editingField[
+                                                          surfaceSelectedTileFieldKey
+                                                        ]
+                                                      }
+                                                      initialDisplay={
+                                                        surface.selected_tile
+                                                          ?.description ?? ""
+                                                      }
+                                                      onSelect={(tile) =>
+                                                        setFieldValues(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [surfaceSelectedTileFieldKey]:
+                                                              tile,
+                                                          }),
+                                                        )
+                                                      }
+                                                    />
+                                                    <button
+                                                      className="btn join-item focus-within:outline-0"
+                                                      disabled={
+                                                        savingField ===
+                                                        surfaceSelectedTileFieldKey
+                                                      }
+                                                      onClick={() => {
+                                                        if (
+                                                          editingField[
+                                                            surfaceSelectedTileFieldKey
+                                                          ]
+                                                        ) {
+                                                          handleSaveEntity(
+                                                            updateSurface,
+                                                            updateSurfaceLocal,
+                                                            surface.id,
+                                                            surfaceSelectedTileFieldKey,
+                                                            fieldValues[
+                                                              surfaceSelectedTileFieldKey
+                                                            ],
+                                                            "selected tile",
+                                                            [h.id, area.id],
+                                                            fieldValues[
+                                                              surfaceSelectedTileFieldKey
+                                                            ]?.sku,
+                                                          );
+                                                        } else {
+                                                          ensureTilesCatalog();
+                                                          setEditingField(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [surfaceSelectedTileFieldKey]: true,
+                                                            }),
+                                                          );
+                                                        }
+                                                      }}
+                                                    >
+                                                      {savingField ===
+                                                      surfaceSelectedTileFieldKey ? (
+                                                        <span className="loading loading-spinner text-current" />
+                                                      ) : editingField[
+                                                          surfaceSelectedTileFieldKey
+                                                        ] ? (
+                                                        <SaveIcon
+                                                          className="w-4 h-4 fill-base-content"
+                                                          unique_id={`save_unit_${h.unit_number}_selected_tile_field_${surface.id}`}
+                                                        />
+                                                      ) : (
+                                                        <EditIcon className="w-4 h-4 fill-base-content" />
+                                                      )}
+                                                    </button>
+                                                  </div>
+                                                </div>
+
+                                                <div className="divider text-sm"></div>
+                                                <div className="flex justify-end items-center w-full mb-2">
+                                                  <button
+                                                    onClick={() => {
+                                                      document
+                                                        .getElementById(
+                                                          `unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`,
+                                                        )
+                                                        .showModal();
+                                                    }}
+                                                    className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
+                                                  >
+                                                    <span className="text-error-content">
+                                                      Delete Surface
+                                                    </span>
+                                                    <DeleteIcon
+                                                      unique_id={surface.id}
+                                                      className="w-4 h-4 fill-error-content"
+                                                    />
+                                                  </button>
+                                                  <dialog
+                                                    id={`unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`}
+                                                    className="modal modal-middle"
+                                                  >
+                                                    <div className="modal-box">
+                                                      <h3 className="font-semibold text-lg mb-6">
+                                                        Are you sure you want to
+                                                        delete{" "}
+                                                        <span className="font-bold text-xl">
+                                                          {surface.name}
+                                                        </span>
+                                                        ?
+                                                      </h3>
+                                                      <p className="">
+                                                        This action is permanent
+                                                        and not reversable.
+                                                      </p>
+                                                      <div className="modal-action flex justify-end gap-y-4">
+                                                        <form method="dialog">
+                                                          <button className="btn btn-sm focus-within:outline-0">
+                                                            Cancel
+                                                          </button>
+                                                        </form>
+                                                        <button
+                                                          className="btn btn-error btn-sm"
+                                                          onClick={(e) => {
+                                                            e.preventDefault();
+                                                            submitDeleteSurface(
+                                                              h.id,
+                                                              area.id,
+                                                              surface.id,
+                                                              surface.name,
+                                                            );
+                                                            document
+                                                              .getElementById(
+                                                                `unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`,
+                                                              )
+                                                              .close();
+                                                          }}
+                                                        >
+                                                          <span className="text-error-content">
+                                                            Confirm
+                                                          </span>
+                                                          <DeleteIcon
+                                                            unique_id={surface.id}
+                                                            className="w-4 h-4 fill-error-content"
+                                                          />
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  </dialog>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
                                     </div>
-                                    <div className="flex justify-end items-center w-full mb-6">
+
+                                    <div className="divider text-sm"></div>
+                                    <div className="flex justify-end items-center w-full mb-2">
                                       <button
                                         onClick={() => {
                                           document
@@ -543,6 +1019,16 @@ const HouseManager = ({ className = "className" }) => {
                                               className="btn btn-error btn-sm"
                                               onClick={(e) => {
                                                 e.preventDefault();
+                                                submitDeleteArea(
+                                                  h.id,
+                                                  area.id,
+                                                  area.name,
+                                                );
+                                                document
+                                                  .getElementById(
+                                                    `unit_number_${h.unit_number}_delete_area_modal_${area.id}`,
+                                                  )
+                                                  .close();
                                               }}
                                             >
                                               <span className="text-error-content">
@@ -562,7 +1048,7 @@ const HouseManager = ({ className = "className" }) => {
                               );
                             })}
                           </div>
-                        </section>
+                        </div>
                         <div className="divider text-sm"></div>
                         <div className="flex justify-end items-center w-full">
                           <button
@@ -579,7 +1065,7 @@ const HouseManager = ({ className = "className" }) => {
                               Delete House
                             </span>
                             <DeleteIcon
-                              unique_id={houses.id}
+                              unique_id={h.id}
                               className="w-4 h-4 fill-error-content"
                             />
                           </button>
@@ -609,13 +1095,19 @@ const HouseManager = ({ className = "className" }) => {
                                   className="btn btn-error btn-sm"
                                   onClick={(e) => {
                                     e.preventDefault();
+                                    submitDeleteHouse(h.id, h.unit_number);
+                                    document
+                                      .getElementById(
+                                        `unit_number_${h.unit_number}_delete_house_modal`,
+                                      )
+                                      .close();
                                   }}
                                 >
                                   <span className="text-error-content">
                                     Confirm
                                   </span>
                                   <DeleteIcon
-                                    unique_id={houses.id}
+                                    unique_id={h.id}
                                     className="w-4 h-4 fill-error-content"
                                   />
                                 </button>
@@ -637,7 +1129,7 @@ const HouseManager = ({ className = "className" }) => {
               role="button"
             />
             <div className="tab-content bg-base-100 border-base-300 p-6">
-              <div className="flex justify-center">Tab 2</div>
+              <div className="flex justify-center">Create New house</div>
             </div>
           </div>
         </div>

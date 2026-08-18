@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
+import Fuse from "fuse.js";
 
 /**
- * A generic search hook that filters an array of data based on a search query
- * and a set of keys to search within.
+ * A generic search hook that filters an array of data using Fuse.js for fuzzy matching.
  * 
  * @param {Array} data - The array of objects to filter.
  * @param {Array<string>} searchKeys - The keys in the objects to search through.
@@ -16,28 +16,14 @@ const useSearch = (data = [], searchKeys = []) => {
       return data;
     }
 
-    const query = searchQuery.toLowerCase();
+    const options = {
+      keys: searchKeys,
+      threshold: 0.4, // Balance between strictness and fuzziness
+      ignoreLocation: true,
+    };
 
-    return data.filter((item) => {
-      return searchKeys.some((key) => {
-        const value = getValueByPath(item, key);
-        
-        if (Array.isArray(value)) {
-          return value.some((val) => 
-            String(val).toLowerCase().includes(query)
-          );
-        }
-        
-        if (value && typeof value === "object") {
-          // For nested objects (like selected_tile), search all their values
-          return Object.values(value).some((val) => 
-            String(val).toLowerCase().includes(query)
-          );
-        }
-
-        return String(value || "").toLowerCase().includes(query);
-      });
-    });
+    const fuse = new Fuse(data, options);
+    return fuse.search(searchQuery).map((result) => result.item);
   }, [data, searchQuery, searchKeys]);
 
   return {
@@ -47,28 +33,5 @@ const useSearch = (data = [], searchKeys = []) => {
   };
 };
 
-/**
- * Helper function to retrieve a value from a nested object using a dot-notation path.
- * e.g., "areas.surfaces.selected_tile.sku"
- */
-function getValueByPath(obj, path) {
-  return path.split(".").reduce((acc, part) => {
-    if (acc && Array.isArray(acc)) {
-      // If we hit an array, we return the array of values for that path in all elements
-      return acc.map((item) => getValueByPath(item, path.split(part).slice(1).join(".")));
-    }
-    return acc && acc[part] !== undefined ? acc[part] : undefined;
-  }, obj);
-}
-
-// Simplified path resolution for common nested structures in DeepFrame
-function resolveValue(item, key) {
-  // Direct property
-  if (item[key] !== undefined) return item[key];
-  
-  // This is a placeholder for more complex nested resolution 
-  // that will be expanded when Fuse.js is implemented.
-  return undefined;
-}
-
 export default useSearch;
+

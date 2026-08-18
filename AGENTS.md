@@ -24,3 +24,17 @@ Run from `/frontend`:
   - Components: `frontend/src/components`
   - Hooks: `frontend/src/hooks`
   - Routes: `frontend/src/routes`
+
+## Data Patterns & Implementation Conventions
+- **Hierarchy**: `House` → `Area` → `Surface` → `Tile` (selected_tile). All nested data is enriched in `houseService.js` via `enrichHouseData()`.
+- **Optimistic UI**: All mutations use local context updaters (`*Local` functions) for instant feedback, then sync via Supabase service calls wrapped in `toast.promise`.
+- **Fuzzy Search**: Use `Fuse.js` (threshold ~0.4) for all searchable selectors on large catalogs (tiles, sanware, kitchenware). The `useSearch` hook wraps Fuse.js for consistent behavior.
+- **Context API**: `HouseContext` provides full CRUD local updaters for all three levels (`add*Local`, `update*Local`, `delete*Local`).
+- **Number Inputs**: Hide browser spinners via global CSS (`input[type=number] { -moz-appearance: textfield; }` and `::-webkit-outer-spin-button`).
+- **Performance Priority**: Minimal/no animations, non-blocking interactions. Prefer native HTML elements (select, input) over heavy libraries.
+
+## Key Files
+- `frontend/src/core/HouseContext.jsx` - Central state & local mutations
+- `frontend/src/core/services/houseService.js` - Supabase API & data enrichment
+- `frontend/src/core/hooks/useSearch.js` - Fuse.js search abstraction
+- `frontend/src/routes/management/HouseManager.jsx` - Main management UI

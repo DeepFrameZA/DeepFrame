@@ -9,16 +9,14 @@ function enrichHouseData(house) {
   const allAreas =
     house.areas?.map((area) => ({
       ...area,
-    })) || [];
-
-  const allSurfaces =
-    house.areas?.flatMap((area) =>
-      (area.surfaces || []).map((surface) => ({
+      allSurfaces: (area.surfaces || []).map((surface) => ({
         ...surface,
         area_name: area.name,
         area_id: area.id,
       })),
-    ) || [];
+    })) || [];
+
+  const allSurfaces = allAreas.flatMap((area) => area.allSurfaces);
 
   const tilesMap = new Map();
   allSurfaces.forEach((s) => {
