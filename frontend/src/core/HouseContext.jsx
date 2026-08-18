@@ -35,7 +35,10 @@ export function HouseProvider({ children }) {
   }
 
   function addHouseLocal(newHouse) {
-    setHouses((prevHouses) => [newHouse, ...prevHouses]);
+    setHouses((prevHouses) => [
+      { ...newHouse, allAreas: newHouse.allAreas ?? [] },
+      ...prevHouses,
+    ]);
   }
 
   function updateHouseLocal(id, updates) {

@@ -24,6 +24,7 @@ const HouseManager = ({ className = "className" }) => {
     updateHouseLocal,
     updateAreaLocal,
     addAreaLocal,
+    addHouseLocal,
     deleteHouseLocal,
     deleteAreaLocal,
     updateSurfaceLocal,
@@ -42,6 +43,12 @@ const HouseManager = ({ className = "className" }) => {
   const [creatingSurfaceId, setCreatingSurfaceId] = useState(null);
   const [activeSurfaceAreaId, setActiveSurfaceAreaId] = useState(null);
   const [newSurfaceName, setNewSurfaceName] = useState("");
+  const [newHouse, setNewHouse] = useState({
+    unit_number: "",
+    client_surname: "",
+    client_contact_number: "",
+  });
+  const [creatingHouse, setCreatingHouse] = useState(false);
 
   useEffect(() => {
     const initial = {};
@@ -220,6 +227,51 @@ const HouseManager = ({ className = "className" }) => {
     }
   };
 
+  const submitCreateHouse = async () => {
+    const { unit_number, client_surname, client_contact_number } = newHouse;
+    if (
+      !unit_number.trim() ||
+      !client_surname.trim() ||
+      !client_contact_number.trim()
+    ) {
+      toast.error(
+        "Please provide unit number, client surname and contact number",
+      );
+      return;
+    }
+    if (!/^\d{10}$/.test(client_contact_number.trim())) {
+      toast.error("Contact number must be exactly 10 digits");
+      return;
+    }
+
+    setCreatingHouse(true);
+    const payload = {
+      unit_number: unit_number.trim(),
+      client_surname: client_surname.trim(),
+      client_contact_number: client_contact_number.trim(),
+    };
+    const createPromise = createHouse(payload);
+
+    try {
+      const created = await toast.promise(createPromise, {
+        loading: "Creating house...",
+        success: "House created!",
+        error: (err) => err?.message ?? "Create failed",
+      });
+      addHouseLocal(created);
+      setNewHouse({
+        unit_number: "",
+        client_surname: "",
+        client_contact_number: "",
+      });
+      document.getElementById("manage_tab")?.click();
+    } catch (error) {
+      console.error("Create house failed:", error);
+    } finally {
+      setCreatingHouse(false);
+    }
+  };
+
   return (
     <>
       <div className={`${className} w-[95%] relative top-16.25`}>
@@ -233,6 +285,7 @@ const HouseManager = ({ className = "className" }) => {
               type="radio"
               name="my_tabs_2"
               aria-label="Manage"
+              id="manage_tab"
               defaultChecked
             />
 
@@ -554,7 +607,7 @@ const HouseManager = ({ className = "className" }) => {
                               const areaNameFieldKey = `${area.id}_name`;
                               return (
                                 <div
-                                  className="collapse first:collapse-open collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
+                                  className="collapse collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
                                   key={area.id}
                                 >
                                   <input type="checkbox" className="peer" />
@@ -718,7 +771,7 @@ const HouseManager = ({ className = "className" }) => {
                                           const surfaceHeightFieldKey = `${surface.id}_surface_height`;
                                           return (
                                             <div
-                                              className="collapse first:collapse-open collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
+                                              className="collapse collapse-arrow bg-base-100 border border-base-content/25 focus-within:outline-0 focus-within:shadow-none mb-3"
                                               key={surface.id}
                                             >
                                               <input
@@ -1451,6 +1504,13 @@ const HouseManager = ({ className = "className" }) => {
                     placeholder="Unit number"
                     className=""
                     required
+                    value={newHouse.unit_number}
+                    onChange={(e) =>
+                      setNewHouse((p) => ({
+                        ...p,
+                        unit_number: e.target.value,
+                      }))
+                    }
                   />
                 </label>
 
@@ -1464,6 +1524,13 @@ const HouseManager = ({ className = "className" }) => {
                     placeholder="Client surname"
                     className=""
                     required
+                    value={newHouse.client_surname}
+                    onChange={(e) =>
+                      setNewHouse((p) => ({
+                        ...p,
+                        client_surname: e.target.value,
+                      }))
+                    }
                   />
                 </label>
 
@@ -1498,13 +1565,31 @@ const HouseManager = ({ className = "className" }) => {
                     pattern="[0-9]*"
                     minLength="10"
                     maxLength="10"
+                    value={newHouse.client_contact_number}
+                    onChange={(e) =>
+                      setNewHouse((p) => ({
+                        ...p,
+                        client_contact_number: e.target.value,
+                      }))
+                    }
                   />
                 </label>
               </div>
 
               <div className="flex justify-end items-center w-full mt-6 mb-2">
-                <button className="btn focus-within:outline-0 flex gap-y-4">
-                  <span className="">Create</span>
+                <button
+                  className="btn focus-within:outline-0 flex gap-y-4"
+                  disabled={creatingHouse}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    submitCreateHouse();
+                  }}
+                >
+                  {creatingHouse ? (
+                    <span className="loading loading-spinner text-current" />
+                  ) : (
+                    <span className="">Create</span>
+                  )}
                 </button>
               </div>
             </div>
