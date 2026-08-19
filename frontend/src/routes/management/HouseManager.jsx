@@ -12,11 +12,32 @@ import {
   deleteArea,
   deleteSurface,
 } from "../../core/services/houseService";
-import EditIcon from "../../components/EditIcon";
-import SaveIcon from "../../components/SaveIcon";
-import DeleteIcon from "../../components/DeleteIcon";
-import TileCombobox from "../../components/TileCombobox";
 import toast from "react-hot-toast";
+import ManagedTextField from "../../components/management/ManagedTextField";
+import ManagedTileField from "../../components/management/ManagedTileField";
+import DeleteButton from "../../components/management/DeleteButton";
+import CreateField from "../../components/management/CreateField";
+
+const ContactIcon = () => (
+  <svg
+    className="h-[1em] opacity-50"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 16 16"
+  >
+    <g fill="none">
+      <path
+        d="M7.25 11.5C6.83579 11.5 6.5 11.8358 6.5 12.25C6.5 12.6642 6.83579 13 7.25 13H8.75C9.16421 13 9.5 12.6642 9.5 12.25C9.5 11.8358 9.16421 11.5 8.75 11.5H7.25Z"
+        fill="currentColor"
+      ></path>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6 1C4.61929 1 3.5 2.11929 3.5 3.5V12.5C3.5 13.8807 4.61929 15 6 15H10C11.3807 15 12.5 13.8807 12.5 12.5V3.5C12.5 2.11929 11.3807 1 10 1H6ZM10 2.5H9.5V3C9.5 3.27614 9.27614 3.5 9 3.5H7C6.72386 3.5 6.5 3.27614 6.5 3V2.5H6C5.44771 2.5 5 2.94772 5 3.5V12.5C5 13.0523 5.44772 13.5 6 13.5H10C10.5523 13.5 11 13.0523 11 12.5V3.5C11 2.94772 10.5523 2.5 10 2.5Z"
+        fill="currentColor"
+      ></path>
+    </g>
+  </svg>
+);
 
 const HouseManager = ({ className = "className" }) => {
   const {
@@ -272,6 +293,17 @@ const HouseManager = ({ className = "className" }) => {
     }
   };
 
+  const beginEdit = (fieldKey) =>
+    setEditingField((prev) => ({ ...prev, [fieldKey]: true }));
+
+  const beginEditClear = (fieldKey) => {
+    setFieldValues((prev) => ({ ...prev, [fieldKey]: "" }));
+    setEditingField((prev) => ({ ...prev, [fieldKey]: true }));
+  };
+
+  const setValue = (fieldKey, value) =>
+    setFieldValues((prev) => ({ ...prev, [fieldKey]: value }));
+
   return (
     <>
       <div className={`${className} w-[95%] relative top-16.25`}>
@@ -320,210 +352,88 @@ const HouseManager = ({ className = "className" }) => {
                           </div>
 
                           <div className="flex flex-wrap justify-center gap-4">
-                            <div className="flex join">
-                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                  Unit number
-                                </span>
-                                <input
-                                  type="text"
-                                  placeholder="Unit number"
-                                  className=""
-                                  required
-                                  disabled={!editingField[unitNumberFieldKey]}
-                                  value={
-                                    fieldValues[unitNumberFieldKey] ??
-                                    h.unit_number
-                                  }
-                                  onChange={(e) =>
-                                    setFieldValues((prev) => ({
-                                      ...prev,
-                                      [unitNumberFieldKey]: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </label>
-                              <button
-                                className="btn join-item focus-within:outline-0"
-                                disabled={savingField === unitNumberFieldKey}
-                                onClick={() => {
-                                  if (editingField[unitNumberFieldKey]) {
-                                    handleSaveEntity(
-                                      updateHouse,
-                                      updateHouseLocal,
-                                      h.id,
-                                      unitNumberFieldKey,
-                                      fieldValues[unitNumberFieldKey],
-                                      "unit number",
-                                    );
-                                  } else {
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [unitNumberFieldKey]: true,
-                                    }));
-                                  }
-                                }}
-                              >
-                                {savingField === unitNumberFieldKey ? (
-                                  <span className="loading loading-spinner text-current" />
-                                ) : editingField[unitNumberFieldKey] ? (
-                                  <SaveIcon
-                                    className="w-4 h-4 fill-base-content"
-                                    unique_id={`save_unit_number_field_${h.unit_number}`}
-                                  />
-                                ) : (
-                                  <EditIcon className="w-4 h-4 fill-base-content" />
-                                )}
-                              </button>
-                            </div>
+                            <ManagedTextField
+                              label="Unit number"
+                              fieldKey={unitNumberFieldKey}
+                              value={fieldValues[unitNumberFieldKey]}
+                              fallback={h.unit_number}
+                              editing={editingField[unitNumberFieldKey]}
+                              saving={savingField === unitNumberFieldKey}
+                              uniqueId={`save_unit_number_field_${h.unit_number}`}
+                              onChange={(v) => setValue(unitNumberFieldKey, v)}
+                              onBeginEdit={() => beginEdit(unitNumberFieldKey)}
+                              onSave={() =>
+                                handleSaveEntity(
+                                  updateHouse,
+                                  updateHouseLocal,
+                                  h.id,
+                                  unitNumberFieldKey,
+                                  fieldValues[unitNumberFieldKey],
+                                  "unit number",
+                                )
+                              }
+                            />
 
-                            <div className="flex join">
-                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                  Client surname
-                                </span>
+                            <ManagedTextField
+                              label="Client surname"
+                              fieldKey={clientSurnameFieldKey}
+                              value={fieldValues[clientSurnameFieldKey]}
+                              fallback={h.client_surname}
+                              editing={editingField[clientSurnameFieldKey]}
+                              saving={savingField === clientSurnameFieldKey}
+                              uniqueId={`save_client_surname_field_${h.unit_number}`}
+                              onChange={(v) =>
+                                setValue(clientSurnameFieldKey, v)
+                              }
+                              onBeginEdit={() =>
+                                beginEdit(clientSurnameFieldKey)
+                              }
+                              onSave={() =>
+                                handleSaveEntity(
+                                  updateHouse,
+                                  updateHouseLocal,
+                                  h.id,
+                                  clientSurnameFieldKey,
+                                  fieldValues[clientSurnameFieldKey],
+                                  "client surname",
+                                )
+                              }
+                            />
 
-                                <input
-                                  type="text"
-                                  placeholder="Client surname"
-                                  className=""
-                                  required
-                                  disabled={
-                                    !editingField[clientSurnameFieldKey]
-                                  }
-                                  value={
-                                    fieldValues[clientSurnameFieldKey] ??
-                                    h.client_surname
-                                  }
-                                  onChange={(e) =>
-                                    setFieldValues((prev) => ({
-                                      ...prev,
-                                      [clientSurnameFieldKey]: e.target.value,
-                                    }))
-                                  }
-                                />
-                              </label>
-                              <button
-                                className="btn join-item focus-within:outline-0"
-                                disabled={savingField === clientSurnameFieldKey}
-                                onClick={() => {
-                                  if (editingField[clientSurnameFieldKey]) {
-                                    handleSaveEntity(
-                                      updateHouse,
-                                      updateHouseLocal,
-                                      h.id,
-                                      clientSurnameFieldKey,
-                                      fieldValues[clientSurnameFieldKey],
-                                      "client surname",
-                                    );
-                                  } else {
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [clientSurnameFieldKey]: true,
-                                    }));
-                                  }
-                                }}
-                              >
-                                {savingField === clientSurnameFieldKey ? (
-                                  <span className="loading loading-spinner text-current" />
-                                ) : editingField[clientSurnameFieldKey] ? (
-                                  <SaveIcon
-                                    className="w-4 h-4 fill-base-content"
-                                    unique_id={`save_client_surname_field_${h.unit_number}`}
-                                  />
-                                ) : (
-                                  <EditIcon className="w-4 h-4 fill-base-content" />
-                                )}
-                              </button>
-                            </div>
-
-                            <div className="flex join">
-                              <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                  Client contact number
-                                </span>
-                                <svg
-                                  className="h-[1em] opacity-50"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 16 16"
-                                >
-                                  <g fill="none">
-                                    <path
-                                      d="M7.25 11.5C6.83579 11.5 6.5 11.8358 6.5 12.25C6.5 12.6642 6.83579 13 7.25 13H8.75C9.16421 13 9.5 12.6642 9.5 12.25C9.5 11.8358 9.16421 11.5 8.75 11.5H7.25Z"
-                                      fill="currentColor"
-                                    ></path>
-                                    <path
-                                      fillRule="evenodd"
-                                      clipRule="evenodd"
-                                      d="M6 1C4.61929 1 3.5 2.11929 3.5 3.5V12.5C3.5 13.8807 4.61929 15 6 15H10C11.3807 15 12.5 13.8807 12.5 12.5V3.5C12.5 2.11929 11.3807 1 10 1H6ZM10 2.5H9.5V3C9.5 3.27614 9.27614 3.5 9 3.5H7C6.72386 3.5 6.5 3.27614 6.5 3V2.5H6C5.44771 2.5 5 2.94772 5 3.5V12.5C5 13.0523 5.44772 13.5 6 13.5H10C10.5523 13.5 11 13.0523 11 12.5V3.5C11 2.94772 10.5523 2.5 10 2.5Z"
-                                      fill="currentColor"
-                                    ></path>
-                                  </g>
-                                </svg>
-
-                                <input
-                                  type="tel"
-                                  placeholder="Client contact number"
-                                  className=""
-                                  required
-                                  disabled={
-                                    !editingField[clientContactNumberFieldKey]
-                                  }
-                                  value={
-                                    fieldValues[clientContactNumberFieldKey] ??
-                                    h.client_contact_number
-                                  }
-                                  onChange={(e) =>
-                                    setFieldValues((prev) => ({
-                                      ...prev,
-                                      [clientContactNumberFieldKey]:
-                                        e.target.value,
-                                    }))
-                                  }
-                                  pattern="[0-9]*"
-                                  minLength="10"
-                                  maxLength="10"
-                                />
-                              </label>
-                              <button
-                                className="btn join-item focus-within:outline-0"
-                                disabled={
-                                  savingField === clientContactNumberFieldKey
-                                }
-                                onClick={() => {
-                                  if (
-                                    editingField[clientContactNumberFieldKey]
-                                  ) {
-                                    handleSaveEntity(
-                                      updateHouse,
-                                      updateHouseLocal,
-                                      h.id,
-                                      clientContactNumberFieldKey,
-                                      fieldValues[clientContactNumberFieldKey],
-                                      "contact number",
-                                    );
-                                  } else {
-                                    setEditingField((prev) => ({
-                                      ...prev,
-                                      [clientContactNumberFieldKey]: true,
-                                    }));
-                                  }
-                                }}
-                              >
-                                {savingField === clientContactNumberFieldKey ? (
-                                  <span className="loading loading-spinner text-current" />
-                                ) : editingField[
-                                    clientContactNumberFieldKey
-                                  ] ? (
-                                  <SaveIcon
-                                    className="w-4 h-4 fill-base-content"
-                                    unique_id={`save_contact_number_field_${h.unit_number}`}
-                                  />
-                                ) : (
-                                  <EditIcon className="w-4 h-4 fill-base-content" />
-                                )}
-                              </button>
-                            </div>
+                            <ManagedTextField
+                              label="Client contact number"
+                              fieldKey={clientContactNumberFieldKey}
+                              value={fieldValues[clientContactNumberFieldKey]}
+                              fallback={h.client_contact_number}
+                              editing={
+                                editingField[clientContactNumberFieldKey]
+                              }
+                              saving={
+                                savingField === clientContactNumberFieldKey
+                              }
+                              uniqueId={`save_contact_number_field_${h.unit_number}`}
+                              onChange={(v) =>
+                                setValue(clientContactNumberFieldKey, v)
+                              }
+                              onBeginEdit={() =>
+                                beginEdit(clientContactNumberFieldKey)
+                              }
+                              onSave={() =>
+                                handleSaveEntity(
+                                  updateHouse,
+                                  updateHouseLocal,
+                                  h.id,
+                                  clientContactNumberFieldKey,
+                                  fieldValues[clientContactNumberFieldKey],
+                                  "contact number",
+                                )
+                              }
+                              type="tel"
+                              pattern="[0-9]*"
+                              minLength="10"
+                              maxLength="10"
+                              icon={<ContactIcon />}
+                            />
                           </div>
                         </div>
 
@@ -616,69 +526,33 @@ const HouseManager = ({ className = "className" }) => {
                                   </div>
                                   <div className="collapse-content z-1">
                                     <div className="">
-                                      <div className="flex join py-2">
-                                        <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                          <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                            Area name
-                                          </span>
-                                          <input
-                                            type="text"
-                                            placeholder="Area name"
-                                            className=""
-                                            required
-                                            disabled={
-                                              !editingField[areaNameFieldKey]
-                                            }
-                                            value={
-                                              fieldValues[areaNameFieldKey] ??
-                                              area.name
-                                            }
-                                            onChange={(e) =>
-                                              setFieldValues((prev) => ({
-                                                ...prev,
-                                                [areaNameFieldKey]:
-                                                  e.target.value,
-                                              }))
-                                            }
-                                          />
-                                        </label>
-                                        <button
-                                          className="btn join-item focus-within:outline-0"
-                                          disabled={
-                                            savingField === areaNameFieldKey
-                                          }
-                                          onClick={() => {
-                                            if (
-                                              editingField[areaNameFieldKey]
-                                            ) {
-                                              handleSaveEntity(
-                                                updateArea,
-                                                updateAreaLocal,
-                                                area.id,
-                                                areaNameFieldKey,
-                                                fieldValues[areaNameFieldKey],
-                                                "area name",
-                                              );
-                                            } else {
-                                              setEditingField((prev) => ({
-                                                ...prev,
-                                                [areaNameFieldKey]: true,
-                                              }));
-                                            }
-                                          }}
-                                        >
-                                          {savingField === areaNameFieldKey ? (
-                                            <span className="loading loading-spinner text-current" />
-                                          ) : editingField[areaNameFieldKey] ? (
-                                            <SaveIcon
-                                              className="w-4 h-4 fill-base-content"
-                                              unique_id={`save_unit_${h.unit_number}_area_name_field_${area.id}`}
-                                            />
-                                          ) : (
-                                            <EditIcon className="w-4 h-4 fill-base-content" />
-                                          )}
-                                        </button>
-                                      </div>
+                                      <ManagedTextField
+                                        label="Area name"
+                                        fieldKey={areaNameFieldKey}
+                                        value={fieldValues[areaNameFieldKey]}
+                                        fallback={area.name}
+                                        editing={editingField[areaNameFieldKey]}
+                                        saving={
+                                          savingField === areaNameFieldKey
+                                        }
+                                        uniqueId={`save_unit_${h.unit_number}_area_name_field_${area.id}`}
+                                        onChange={(v) =>
+                                          setValue(areaNameFieldKey, v)
+                                        }
+                                        onBeginEdit={() =>
+                                          beginEdit(areaNameFieldKey)
+                                        }
+                                        onSave={() =>
+                                          handleSaveEntity(
+                                            updateArea,
+                                            updateAreaLocal,
+                                            area.id,
+                                            areaNameFieldKey,
+                                            fieldValues[areaNameFieldKey],
+                                            "area name",
+                                          )
+                                        }
+                                      />
 
                                       <div className="flex justify-between items-center w-full my-6">
                                         <div className="font-semibold text-sm">
@@ -717,7 +591,7 @@ const HouseManager = ({ className = "className" }) => {
                                           </h3>
                                           <label className="input floating-label validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
                                             <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                              Surface name
+                                              Area name
                                             </span>
                                             <input
                                               className=""
@@ -783,698 +657,340 @@ const HouseManager = ({ className = "className" }) => {
                                               </div>
                                               <div className="collapse-content z-1">
                                                 <div className="flex flex-wrap gap-4 grow-0">
-                                                  <div className="flex join py-2">
-                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                                        Surface name
-                                                      </span>
-                                                      <input
-                                                        type="text"
-                                                        placeholder="Surface name"
-                                                        className=""
-                                                        disabled={
-                                                          !editingField[
-                                                            surfaceNameFieldKey
-                                                          ]
-                                                        }
-                                                        value={
-                                                          fieldValues[
-                                                            surfaceNameFieldKey
-                                                          ] ?? surface.name
-                                                        }
-                                                        onChange={(e) =>
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceNameFieldKey]:
-                                                                e.target.value,
-                                                            }),
-                                                          )
-                                                        }
-                                                      />
-                                                    </label>
-                                                    <button
-                                                      className="btn join-item focus-within:outline-0"
-                                                      disabled={
-                                                        savingField ===
+                                                  <ManagedTextField
+                                                    label="Surface name"
+                                                    fieldKey={
+                                                      surfaceNameFieldKey
+                                                    }
+                                                    value={
+                                                      fieldValues[
                                                         surfaceNameFieldKey
-                                                      }
-                                                      onClick={() => {
-                                                        if (
-                                                          editingField[
-                                                            surfaceNameFieldKey
-                                                          ]
-                                                        ) {
-                                                          const nameValue =
-                                                            fieldValues[
-                                                              surfaceNameFieldKey
-                                                            ];
-                                                          const nameToSave =
-                                                            nameValue &&
-                                                            nameValue.trim()
-                                                              ? nameValue
-                                                              : surface.name;
-                                                          handleSaveEntity(
-                                                            updateSurface,
-                                                            updateSurfaceLocal,
-                                                            surface.id,
-                                                            surfaceNameFieldKey,
-                                                            nameToSave,
-                                                            "surface name",
-                                                            [h.id, area.id],
-                                                          );
-                                                        } else {
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceNameFieldKey]:
-                                                                "",
-                                                            }),
-                                                          );
-                                                          setEditingField(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceNameFieldKey]: true,
-                                                            }),
-                                                          );
-                                                        }
-                                                      }}
-                                                    >
-                                                      {savingField ===
-                                                      surfaceNameFieldKey ? (
-                                                        <span className="loading loading-spinner text-current" />
-                                                      ) : editingField[
+                                                      ]
+                                                    }
+                                                    fallback={surface.name}
+                                                    editing={
+                                                      editingField[
+                                                        surfaceNameFieldKey
+                                                      ]
+                                                    }
+                                                    saving={
+                                                      savingField ===
+                                                      surfaceNameFieldKey
+                                                    }
+                                                    uniqueId={`save_unit_${h.unit_number}_surface_name_field_${surface.id}`}
+                                                    onChange={(v) =>
+                                                      setValue(
+                                                        surfaceNameFieldKey,
+                                                        v,
+                                                      )
+                                                    }
+                                                    onBeginEdit={() =>
+                                                      beginEditClear(
+                                                        surfaceNameFieldKey,
+                                                      )
+                                                    }
+                                                    onSave={() => {
+                                                      const nameValue =
+                                                        fieldValues[
                                                           surfaceNameFieldKey
-                                                        ] ? (
-                                                        <SaveIcon
-                                                          className="w-4 h-4 fill-base-content"
-                                                          unique_id={`save_unit_${h.unit_number}_surface_name_field_${surface.id}`}
-                                                        />
-                                                      ) : (
-                                                        <EditIcon className="w-4 h-4 fill-base-content" />
-                                                      )}
-                                                    </button>
-                                                  </div>
+                                                        ];
+                                                      const nameToSave =
+                                                        nameValue &&
+                                                        nameValue.trim()
+                                                          ? nameValue
+                                                          : surface.name;
+                                                      handleSaveEntity(
+                                                        updateSurface,
+                                                        updateSurfaceLocal,
+                                                        surface.id,
+                                                        surfaceNameFieldKey,
+                                                        nameToSave,
+                                                        "surface name",
+                                                        [h.id, area.id],
+                                                      );
+                                                    }}
+                                                  />
 
-                                                  <div className="flex join py-2">
-                                                    {/*
-                                                      selected_tile: local state intentionally stores the FULL tile
-                                                      object (shape matches the `selected_tile(*)` join result), while
-                                                      the DB column `surfaces.selected_tile` is a text FK to
-                                                      `tiles(sku)`. The split is bridged in handleSaveEntity via the
-                                                      `remoteValue` arg: the sku string is sent to the server while the
-                                                      object is kept in local state. Keep these in sync if the tile
-                                                      object shape changes.
-                                                    */}
-                                                    <TileCombobox
-                                                      key={
-                                                        editingField[
-                                                          surfaceSelectedTileFieldKey
-                                                        ]
-                                                          ? `edit_${surface.id}`
-                                                          : `view_${surface.id}`
-                                                      }
-                                                      catalog={tilesCatalog}
-                                                      loading={
-                                                        !tilesCatalogLoaded
-                                                      }
-                                                      disabled={
-                                                        !editingField[
-                                                          surfaceSelectedTileFieldKey
-                                                        ]
-                                                      }
-                                                      initialDisplay={
-                                                        surface.selected_tile
-                                                          ?.description ?? ""
-                                                      }
-                                                      onSelect={(tile) =>
-                                                        setFieldValues(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            [surfaceSelectedTileFieldKey]:
-                                                              tile,
-                                                          }),
-                                                        )
-                                                      }
-                                                    />
-                                                    <button
-                                                      className="btn join-item focus-within:outline-0"
-                                                      disabled={
-                                                        savingField ===
+                                                  <ManagedTileField
+                                                    fieldKey={surface.id}
+                                                    editing={
+                                                      editingField[
                                                         surfaceSelectedTileFieldKey
-                                                      }
-                                                      onClick={() => {
-                                                        if (
-                                                          editingField[
-                                                            surfaceSelectedTileFieldKey
-                                                          ]
-                                                        ) {
-                                                          handleSaveEntity(
-                                                            updateSurface,
-                                                            updateSurfaceLocal,
-                                                            surface.id,
-                                                            surfaceSelectedTileFieldKey,
-                                                            fieldValues[
-                                                              surfaceSelectedTileFieldKey
-                                                            ],
-                                                            "selected tile",
-                                                            [h.id, area.id],
-                                                            fieldValues[
-                                                              surfaceSelectedTileFieldKey
-                                                            ]?.sku,
-                                                          );
-                                                        } else {
-                                                          ensureTilesCatalog();
-                                                          setEditingField(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceSelectedTileFieldKey]: true,
-                                                            }),
-                                                          );
-                                                        }
-                                                      }}
-                                                    >
-                                                      {savingField ===
-                                                      surfaceSelectedTileFieldKey ? (
-                                                        <span className="loading loading-spinner text-current" />
-                                                      ) : editingField[
+                                                      ]
+                                                    }
+                                                    saving={
+                                                      savingField ===
+                                                      surfaceSelectedTileFieldKey
+                                                    }
+                                                    uniqueId={`save_unit_${h.unit_number}_selected_tile_field_${surface.id}`}
+                                                    catalog={tilesCatalog}
+                                                    loading={
+                                                      !tilesCatalogLoaded
+                                                    }
+                                                    initialDisplay={
+                                                      surface.selected_tile
+                                                        ?.description ?? ""
+                                                    }
+                                                    onSelect={(tile) =>
+                                                      setValue(
+                                                        surfaceSelectedTileFieldKey,
+                                                        tile,
+                                                      )
+                                                    }
+                                                    onBeginEdit={() => {
+                                                      ensureTilesCatalog();
+                                                      beginEdit(
+                                                        surfaceSelectedTileFieldKey,
+                                                      );
+                                                    }}
+                                                    onSave={() =>
+                                                      handleSaveEntity(
+                                                        updateSurface,
+                                                        updateSurfaceLocal,
+                                                        surface.id,
+                                                        surfaceSelectedTileFieldKey,
+                                                        fieldValues[
                                                           surfaceSelectedTileFieldKey
-                                                        ] ? (
-                                                        <SaveIcon
-                                                          className="w-4 h-4 fill-base-content"
-                                                          unique_id={`save_unit_${h.unit_number}_selected_tile_field_${surface.id}`}
-                                                        />
-                                                      ) : (
-                                                        <EditIcon className="w-4 h-4 fill-base-content" />
-                                                      )}
-                                                    </button>
-                                                  </div>
+                                                        ],
+                                                        "selected tile",
+                                                        [h.id, area.id],
+                                                        fieldValues[
+                                                          surfaceSelectedTileFieldKey
+                                                        ]?.sku,
+                                                      )
+                                                    }
+                                                  />
 
-                                                  <div className="flex join py-2">
-                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                                        Surface length
-                                                      </span>
-                                                      <input
-                                                        type="text"
-                                                        placeholder="Surface length"
-                                                        className=""
-                                                        disabled={
-                                                          !editingField[
-                                                            surfaceLengthFieldKey
-                                                          ]
-                                                        }
-                                                        value={
-                                                          fieldValues[
-                                                            surfaceLengthFieldKey
-                                                          ] ??
-                                                          surface.surface_length
-                                                        }
-                                                        onChange={(e) =>
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceLengthFieldKey]:
-                                                                e.target.value,
-                                                            }),
-                                                          )
-                                                        }
-                                                      />
-                                                    </label>
-                                                    <button
-                                                      className="btn join-item focus-within:outline-0"
-                                                      disabled={
-                                                        savingField ===
+                                                  <ManagedTextField
+                                                    label="Surface length"
+                                                    fieldKey={
+                                                      surfaceLengthFieldKey
+                                                    }
+                                                    value={
+                                                      fieldValues[
                                                         surfaceLengthFieldKey
-                                                      }
-                                                      onClick={() => {
-                                                        if (
-                                                          editingField[
-                                                            surfaceLengthFieldKey
-                                                          ]
-                                                        ) {
-                                                          const lengthValue =
-                                                            fieldValues[
-                                                              surfaceLengthFieldKey
-                                                            ];
-                                                          const lengthToSave =
-                                                            lengthValue &&
-                                                            lengthValue.trim()
-                                                              ? lengthValue
-                                                              : surface.surface_length;
-                                                          handleSaveEntity(
-                                                            updateSurface,
-                                                            updateSurfaceLocal,
-                                                            surface.id,
-                                                            surfaceLengthFieldKey,
-                                                            lengthToSave,
-                                                            "Surface length",
-                                                            [h.id, area.id],
-                                                          );
-                                                        } else {
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceLengthFieldKey]:
-                                                                "",
-                                                            }),
-                                                          );
-                                                          setEditingField(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceLengthFieldKey]: true,
-                                                            }),
-                                                          );
-                                                        }
-                                                      }}
-                                                    >
-                                                      {savingField ===
-                                                      surfaceLengthFieldKey ? (
-                                                        <span className="loading loading-spinner text-current" />
-                                                      ) : editingField[
+                                                      ]
+                                                    }
+                                                    fallback={
+                                                      surface.surface_length
+                                                    }
+                                                    editing={
+                                                      editingField[
+                                                        surfaceLengthFieldKey
+                                                      ]
+                                                    }
+                                                    saving={
+                                                      savingField ===
+                                                      surfaceLengthFieldKey
+                                                    }
+                                                    uniqueId={`save_unit_${h.unit_number}_surface_length_field_${surface.id}`}
+                                                    onChange={(v) =>
+                                                      setValue(
+                                                        surfaceLengthFieldKey,
+                                                        v,
+                                                      )
+                                                    }
+                                                    onBeginEdit={() =>
+                                                      beginEditClear(
+                                                        surfaceLengthFieldKey,
+                                                      )
+                                                    }
+                                                    onSave={() => {
+                                                      const lengthValue =
+                                                        fieldValues[
                                                           surfaceLengthFieldKey
-                                                        ] ? (
-                                                        <SaveIcon
-                                                          className="w-4 h-4 fill-base-content"
-                                                          unique_id={`save_unit_${h.unit_number}_surface_length_field_${surface.id}`}
-                                                        />
-                                                      ) : (
-                                                        <EditIcon className="w-4 h-4 fill-base-content" />
-                                                      )}
-                                                    </button>
-                                                  </div>
+                                                        ];
+                                                      const lengthToSave =
+                                                        lengthValue &&
+                                                        lengthValue.trim()
+                                                          ? lengthValue
+                                                          : surface.surface_length;
+                                                      handleSaveEntity(
+                                                        updateSurface,
+                                                        updateSurfaceLocal,
+                                                        surface.id,
+                                                        surfaceLengthFieldKey,
+                                                        lengthToSave,
+                                                        "Surface length",
+                                                        [h.id, area.id],
+                                                      );
+                                                    }}
+                                                    type="number"
+                                                  />
 
-                                                  <div className="flex join py-2">
-                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                                        Surface width
-                                                      </span>
-                                                      <input
-                                                        type="text"
-                                                        placeholder="Surface width"
-                                                        className=""
-                                                        disabled={
-                                                          !editingField[
-                                                            surfaceWidthFieldKey
-                                                          ]
-                                                        }
-                                                        value={
-                                                          fieldValues[
-                                                            surfaceWidthFieldKey
-                                                          ] ??
-                                                          surface.surface_width
-                                                        }
-                                                        onChange={(e) =>
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceWidthFieldKey]:
-                                                                e.target.value,
-                                                            }),
-                                                          )
-                                                        }
-                                                      />
-                                                    </label>
-                                                    <button
-                                                      className="btn join-item focus-within:outline-0"
-                                                      disabled={
-                                                        savingField ===
+                                                  <ManagedTextField
+                                                    label="Surface width"
+                                                    fieldKey={
+                                                      surfaceWidthFieldKey
+                                                    }
+                                                    value={
+                                                      fieldValues[
                                                         surfaceWidthFieldKey
-                                                      }
-                                                      onClick={() => {
-                                                        if (
-                                                          editingField[
-                                                            surfaceWidthFieldKey
-                                                          ]
-                                                        ) {
-                                                          const widthValue =
-                                                            fieldValues[
-                                                              surfaceWidthFieldKey
-                                                            ];
-                                                          const widthToSave =
-                                                            widthValue &&
-                                                            widthValue.trim()
-                                                              ? widthValue
-                                                              : surface.surface_width;
-                                                          handleSaveEntity(
-                                                            updateSurface,
-                                                            updateSurfaceLocal,
-                                                            surface.id,
-                                                            surfaceWidthFieldKey,
-                                                            widthToSave,
-                                                            "Surface width",
-                                                            [h.id, area.id],
-                                                          );
-                                                        } else {
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceWidthFieldKey]:
-                                                                "",
-                                                            }),
-                                                          );
-                                                          setEditingField(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceWidthFieldKey]: true,
-                                                            }),
-                                                          );
-                                                        }
-                                                      }}
-                                                    >
-                                                      {savingField ===
-                                                      surfaceWidthFieldKey ? (
-                                                        <span className="loading loading-spinner text-current" />
-                                                      ) : editingField[
+                                                      ]
+                                                    }
+                                                    fallback={
+                                                      surface.surface_width
+                                                    }
+                                                    editing={
+                                                      editingField[
+                                                        surfaceWidthFieldKey
+                                                      ]
+                                                    }
+                                                    saving={
+                                                      savingField ===
+                                                      surfaceWidthFieldKey
+                                                    }
+                                                    uniqueId={`save_unit_${h.unit_number}_surface_width_field_${surface.id}`}
+                                                    onChange={(v) =>
+                                                      setValue(
+                                                        surfaceWidthFieldKey,
+                                                        v,
+                                                      )
+                                                    }
+                                                    onBeginEdit={() =>
+                                                      beginEditClear(
+                                                        surfaceWidthFieldKey,
+                                                      )
+                                                    }
+                                                    onSave={() => {
+                                                      const widthValue =
+                                                        fieldValues[
                                                           surfaceWidthFieldKey
-                                                        ] ? (
-                                                        <SaveIcon
-                                                          className="w-4 h-4 fill-base-content"
-                                                          unique_id={`save_unit_${h.unit_number}_surface_width_field_${surface.id}`}
-                                                        />
-                                                      ) : (
-                                                        <EditIcon className="w-4 h-4 fill-base-content" />
-                                                      )}
-                                                    </button>
-                                                  </div>
+                                                        ];
+                                                      const widthToSave =
+                                                        widthValue &&
+                                                        widthValue.trim()
+                                                          ? widthValue
+                                                          : surface.surface_width;
+                                                      handleSaveEntity(
+                                                        updateSurface,
+                                                        updateSurfaceLocal,
+                                                        surface.id,
+                                                        surfaceWidthFieldKey,
+                                                        widthToSave,
+                                                        "Surface width",
+                                                        [h.id, area.id],
+                                                      );
+                                                    }}
+                                                    type="number"
+                                                  />
 
-                                                  <div className="flex join py-2">
-                                                    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                                                      <span className="dark:text-[#414342] text-[#d2d2d2]">
-                                                        Surface height
-                                                      </span>
-                                                      <input
-                                                        type="text"
-                                                        placeholder="Surface height"
-                                                        className=""
-                                                        disabled={
-                                                          !editingField[
-                                                            surfaceHeightFieldKey
-                                                          ]
-                                                        }
-                                                        value={
-                                                          fieldValues[
-                                                            surfaceHeightFieldKey
-                                                          ] ??
-                                                          surface.surface_height
-                                                        }
-                                                        onChange={(e) =>
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceHeightFieldKey]:
-                                                                e.target.value,
-                                                            }),
-                                                          )
-                                                        }
-                                                      />
-                                                    </label>
-                                                    <button
-                                                      className="btn join-item focus-within:outline-0"
-                                                      disabled={
-                                                        savingField ===
+                                                  <ManagedTextField
+                                                    label="Surface height"
+                                                    fieldKey={
+                                                      surfaceHeightFieldKey
+                                                    }
+                                                    value={
+                                                      fieldValues[
                                                         surfaceHeightFieldKey
-                                                      }
-                                                      onClick={() => {
-                                                        if (
-                                                          editingField[
-                                                            surfaceHeightFieldKey
-                                                          ]
-                                                        ) {
-                                                          const heightValue =
-                                                            fieldValues[
-                                                              surfaceHeightFieldKey
-                                                            ];
-                                                          const heightToSave =
-                                                            heightValue &&
-                                                            heightValue.trim()
-                                                              ? heightValue
-                                                              : surface.surface_height;
-                                                          handleSaveEntity(
-                                                            updateSurface,
-                                                            updateSurfaceLocal,
-                                                            surface.id,
-                                                            surfaceHeightFieldKey,
-                                                            heightToSave,
-                                                            "Surface height",
-                                                            [h.id, area.id],
-                                                          );
-                                                        } else {
-                                                          setFieldValues(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceHeightFieldKey]:
-                                                                "",
-                                                            }),
-                                                          );
-                                                          setEditingField(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [surfaceHeightFieldKey]: true,
-                                                            }),
-                                                          );
-                                                        }
-                                                      }}
-                                                    >
-                                                      {savingField ===
-                                                      surfaceHeightFieldKey ? (
-                                                        <span className="loading loading-spinner text-current" />
-                                                      ) : editingField[
+                                                      ]
+                                                    }
+                                                    fallback={
+                                                      surface.surface_height
+                                                    }
+                                                    editing={
+                                                      editingField[
+                                                        surfaceHeightFieldKey
+                                                      ]
+                                                    }
+                                                    saving={
+                                                      savingField ===
+                                                      surfaceHeightFieldKey
+                                                    }
+                                                    uniqueId={`save_unit_${h.unit_number}_surface_height_field_${surface.id}`}
+                                                    onChange={(v) =>
+                                                      setValue(
+                                                        surfaceHeightFieldKey,
+                                                        v,
+                                                      )
+                                                    }
+                                                    onBeginEdit={() =>
+                                                      beginEditClear(
+                                                        surfaceHeightFieldKey,
+                                                      )
+                                                    }
+                                                    onSave={() => {
+                                                      const heightValue =
+                                                        fieldValues[
                                                           surfaceHeightFieldKey
-                                                        ] ? (
-                                                        <SaveIcon
-                                                          className="w-4 h-4 fill-base-content"
-                                                          unique_id={`save_unit_${h.unit_number}_surface_height_field_${surface.id}`}
-                                                        />
-                                                      ) : (
-                                                        <EditIcon className="w-4 h-4 fill-base-content" />
-                                                      )}
-                                                    </button>
-                                                  </div>
+                                                        ];
+                                                      const heightToSave =
+                                                        heightValue &&
+                                                        heightValue.trim()
+                                                          ? heightValue
+                                                          : surface.surface_height;
+                                                      handleSaveEntity(
+                                                        updateSurface,
+                                                        updateSurfaceLocal,
+                                                        surface.id,
+                                                        surfaceHeightFieldKey,
+                                                        heightToSave,
+                                                        "Surface height",
+                                                        [h.id, area.id],
+                                                      );
+                                                    }}
+                                                    type="number"
+                                                  />
                                                 </div>
 
                                                 <div className="divider text-sm"></div>
                                                 <div className="flex justify-end items-center w-full mb-2">
-                                                  <button
-                                                    onClick={() => {
-                                                      document
-                                                        .getElementById(
-                                                          `unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`,
-                                                        )
-                                                        .showModal();
-                                                    }}
-                                                    className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
-                                                  >
-                                                    <span className="text-error-content">
-                                                      Delete Surface
-                                                    </span>
-                                                    <DeleteIcon
-                                                      unique_id={surface.id}
-                                                      className="w-4 h-4 fill-error-content"
-                                                    />
-                                                  </button>
-                                                  <dialog
-                                                    id={`unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`}
-                                                    className="modal modal-middle"
-                                                  >
-                                                    <div className="modal-box">
-                                                      <h3 className="font-semibold text-lg mb-6">
-                                                        Are you sure you want to
-                                                        delete{" "}
-                                                        <span className="font-bold text-xl">
-                                                          {surface.name}
-                                                        </span>
-                                                        ?
-                                                      </h3>
-                                                      <p className="">
-                                                        This action is permanent
-                                                        and not reversable.
-                                                      </p>
-                                                      <div className="modal-action flex justify-end gap-y-4">
-                                                        <form method="dialog">
-                                                          <button className="btn btn-sm focus-within:outline-0">
-                                                            Cancel
-                                                          </button>
-                                                        </form>
-                                                        <button
-                                                          className="btn btn-error btn-sm"
-                                                          onClick={(e) => {
-                                                            e.preventDefault();
-                                                            submitDeleteSurface(
-                                                              h.id,
-                                                              area.id,
-                                                              surface.id,
-                                                              surface.name,
-                                                            );
-                                                            document
-                                                              .getElementById(
-                                                                `unit_number_${h.unit_number}_delete_surface_modal_${surface.id}`,
-                                                              )
-                                                              .close();
-                                                          }}
-                                                        >
-                                                          <span className="text-error-content">
-                                                            Confirm
-                                                          </span>
-                                                          <DeleteIcon
-                                                            unique_id={
-                                                              surface.id
-                                                            }
-                                                            className="w-4 h-4 fill-error-content"
-                                                          />
-                                                        </button>
-                                                      </div>
-                                                    </div>
-                                                  </dialog>
+                                                  <DeleteButton
+                                                    buttonLabel="Delete Surface"
+                                                    headingPrefix="Are you sure you want to delete"
+                                                    itemName={surface.name}
+                                                    uniqueId={surface.id}
+                                                    onConfirm={() =>
+                                                      submitDeleteSurface(
+                                                        h.id,
+                                                        area.id,
+                                                        surface.id,
+                                                        surface.name,
+                                                      )
+                                                    }
+                                                  />
                                                 </div>
                                               </div>
                                             </div>
                                           );
                                         })}
                                       </div>
-                                    </div>
 
-                                    <div className="divider text-sm"></div>
-                                    <div className="flex justify-end items-center w-full mb-2">
-                                      <button
-                                        onClick={() => {
-                                          document
-                                            .getElementById(
-                                              `unit_number_${h.unit_number}_delete_area_modal_${area.id}`,
+                                      <div className="divider text-sm"></div>
+                                      <div className="flex justify-end items-center w-full mb-2">
+                                        <DeleteButton
+                                          buttonLabel="Delete Area"
+                                          headingPrefix="Are you sure you want to delete"
+                                          itemName={area.name}
+                                          uniqueId={area.id}
+                                          onConfirm={() =>
+                                            submitDeleteArea(
+                                              h.id,
+                                              area.id,
+                                              area.name,
                                             )
-                                            .showModal();
-                                        }}
-                                        className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
-                                      >
-                                        <span className="text-error-content">
-                                          Delete Area
-                                        </span>
-                                        <DeleteIcon
-                                          unique_id={area.id}
-                                          className="w-4 h-4 fill-error-content"
+                                          }
                                         />
-                                      </button>
-                                      <dialog
-                                        id={`unit_number_${h.unit_number}_delete_area_modal_${area.id}`}
-                                        className="modal modal-middle"
-                                      >
-                                        <div className="modal-box">
-                                          <h3 className="font-semibold text-lg mb-6">
-                                            Are you sure you want to delete{" "}
-                                            <span className="font-bold text-xl">
-                                              {area.name}
-                                            </span>
-                                            ?
-                                          </h3>
-                                          <p className="">
-                                            This action is permanent and not
-                                            reversable.
-                                          </p>
-                                          <div className="modal-action flex justify-end gap-y-4">
-                                            <form method="dialog">
-                                              <button className="btn btn-sm focus-within:outline-0">
-                                                Cancel
-                                              </button>
-                                            </form>
-                                            <button
-                                              className="btn btn-error btn-sm"
-                                              onClick={(e) => {
-                                                e.preventDefault();
-                                                submitDeleteArea(
-                                                  h.id,
-                                                  area.id,
-                                                  area.name,
-                                                );
-                                                document
-                                                  .getElementById(
-                                                    `unit_number_${h.unit_number}_delete_area_modal_${area.id}`,
-                                                  )
-                                                  .close();
-                                              }}
-                                            >
-                                              <span className="text-error-content">
-                                                Confirm
-                                              </span>
-                                              <DeleteIcon
-                                                unique_id={area.id}
-                                                className="w-4 h-4 fill-error-content"
-                                              />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </dialog>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
-                        </div>
-                        <div className="divider text-sm"></div>
-                        <div className="flex justify-end items-center w-full">
-                          <button
-                            className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
-                            onClick={() => {
-                              document
-                                .getElementById(
-                                  `unit_number_${h.unit_number}_delete_house_modal`,
-                                )
-                                .showModal();
-                            }}
-                          >
-                            <span className="text-error-content">
-                              Delete House
-                            </span>
-                            <DeleteIcon
-                              unique_id={h.id}
-                              className="w-4 h-4 fill-error-content"
-                            />
-                          </button>
 
-                          <dialog
-                            id={`unit_number_${h.unit_number}_delete_house_modal`}
-                            className="modal modal-middle"
-                          >
-                            <div className="modal-box">
-                              <h3 className="font-semibold text-lg mb-6">
-                                Are you sure you want to delete house{" "}
-                                <span className="font-bold text-xl">
-                                  {h.unit_number}
-                                </span>
-                                ?
-                              </h3>
-                              <p className="">
-                                This action is permanent and not reversable.
-                              </p>
-                              <div className="modal-action flex justify-end gap-y-4">
-                                <form method="dialog">
-                                  <button className="btn btn-sm focus-within:outline-0">
-                                    Cancel
-                                  </button>
-                                </form>
-                                <button
-                                  className="btn btn-error btn-sm"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    submitDeleteHouse(h.id, h.unit_number);
-                                    document
-                                      .getElementById(
-                                        `unit_number_${h.unit_number}_delete_house_modal`,
-                                      )
-                                      .close();
-                                  }}
-                                >
-                                  <span className="text-error-content">
-                                    Confirm
-                                  </span>
-                                  <DeleteIcon
-                                    unique_id={h.id}
-                                    className="w-4 h-4 fill-error-content"
-                                  />
-                                </button>
-                              </div>
-                            </div>
-                          </dialog>
+                          <div className="divider text-sm"></div>
+                          <div className="flex justify-end items-center w-full">
+                            <DeleteButton
+                              buttonLabel="Delete House"
+                              headingPrefix="Are you sure you want to delete house"
+                              itemName={h.unit_number}
+                              uniqueId={h.id}
+                              onConfirm={() =>
+                                submitDeleteHouse(h.id, h.unit_number)
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1495,85 +1011,34 @@ const HouseManager = ({ className = "className" }) => {
               </div>
 
               <div className="flex flex-wrap justify-center gap-4">
-                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                  <span className="dark:text-[#414342] text-[#d2d2d2]">
-                    Unit number
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Unit number"
-                    className=""
-                    required
-                    value={newHouse.unit_number}
-                    onChange={(e) =>
-                      setNewHouse((p) => ({
-                        ...p,
-                        unit_number: e.target.value,
-                      }))
-                    }
-                  />
-                </label>
+                <CreateField
+                  label="Unit number"
+                  value={newHouse.unit_number}
+                  onChange={(v) =>
+                    setNewHouse((p) => ({ ...p, unit_number: v }))
+                  }
+                />
 
-                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                  <span className="dark:text-[#414342] text-[#d2d2d2]">
-                    Client surname
-                  </span>
+                <CreateField
+                  label="Client surname"
+                  value={newHouse.client_surname}
+                  onChange={(v) =>
+                    setNewHouse((p) => ({ ...p, client_surname: v }))
+                  }
+                />
 
-                  <input
-                    type="text"
-                    placeholder="Client surname"
-                    className=""
-                    required
-                    value={newHouse.client_surname}
-                    onChange={(e) =>
-                      setNewHouse((p) => ({
-                        ...p,
-                        client_surname: e.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-                  <span className="dark:text-[#414342] text-[#d2d2d2]">
-                    Client contact number
-                  </span>
-                  <svg
-                    className="h-[1em] opacity-50"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                  >
-                    <g fill="none">
-                      <path
-                        d="M7.25 11.5C6.83579 11.5 6.5 11.8358 6.5 12.25C6.5 12.6642 6.83579 13 7.25 13H8.75C9.16421 13 9.5 12.6642 9.5 12.25C9.5 11.8358 9.16421 11.5 8.75 11.5H7.25Z"
-                        fill="currentColor"
-                      ></path>
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M6 1C4.61929 1 3.5 2.11929 3.5 3.5V12.5C3.5 13.8807 4.61929 15 6 15H10C11.3807 15 12.5 13.8807 12.5 12.5V3.5C12.5 2.11929 11.3807 1 10 1H6ZM10 2.5H9.5V3C9.5 3.27614 9.27614 3.5 9 3.5H7C6.72386 3.5 6.5 3.27614 6.5 3V2.5H6C5.44771 2.5 5 2.94772 5 3.5V12.5C5 13.0523 5.44772 13.5 6 13.5H10C10.5523 13.5 11 13.0523 11 12.5V3.5C11 2.94772 10.5523 2.5 10 2.5Z"
-                        fill="currentColor"
-                      ></path>
-                    </g>
-                  </svg>
-
-                  <input
-                    type="tel"
-                    placeholder="Client contact number"
-                    className=""
-                    required
-                    pattern="[0-9]*"
-                    minLength="10"
-                    maxLength="10"
-                    value={newHouse.client_contact_number}
-                    onChange={(e) =>
-                      setNewHouse((p) => ({
-                        ...p,
-                        client_contact_number: e.target.value,
-                      }))
-                    }
-                  />
-                </label>
+                <CreateField
+                  label="Client contact number"
+                  value={newHouse.client_contact_number}
+                  onChange={(v) =>
+                    setNewHouse((p) => ({ ...p, client_contact_number: v }))
+                  }
+                  type="tel"
+                  pattern="[0-9]*"
+                  minLength="10"
+                  maxLength="10"
+                  icon={<ContactIcon />}
+                />
               </div>
 
               <div className="flex justify-end items-center w-full mt-6 mb-2">
