@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabase/supabase";
 import { toast } from "react-hot-toast";
+import { getErrorMessage, getDevErrorMessage } from "./utils/message";
 
 export const AuthContext = createContext(null);
 
@@ -58,7 +59,7 @@ export function AuthProvider({ children }) {
   async function signIn({ email, password }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error(error.message || "Sign in failed");
+      toast.error(getDevErrorMessage(error) ?? getErrorMessage(error, "Sign in failed"));
       throw error;
     }
     toast.success("Signed in");
@@ -75,7 +76,7 @@ export function AuthProvider({ children }) {
       },
     });
     if (error) {
-      toast.error(error.message || "Signup failed");
+      toast.error(getDevErrorMessage(error) ?? getErrorMessage(error, "Signup failed"));
       throw error;
     }
     if (data.user) {
@@ -87,7 +88,7 @@ export function AuthProvider({ children }) {
         });
 
       if (profileError) {
-        toast.error(profileError.message || "Profile setup failed");
+        toast.error(getDevErrorMessage(profileError) ?? getErrorMessage(profileError, "Profile setup failed"));
         throw profileError;
       }
     }
@@ -99,7 +100,7 @@ export function AuthProvider({ children }) {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {
-      toast.error(error.message || "Password reset failed");
+      toast.error(getDevErrorMessage(error) ?? getErrorMessage(error, "Password reset failed"));
       throw error;
     }
     toast.success("Password reset email sent");
@@ -108,10 +109,10 @@ export function AuthProvider({ children }) {
   async function updatePassword({ password }) {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) {
-      toast.error(error.message || "Password update failed");
+      toast.error(getDevErrorMessage(error) ?? getErrorMessage(error, "Password update failed"));
       throw error;
     }
-    toast.success("Password updated");
+    toast.success("Password updated successfully");
   }
 
   async function signOut() {

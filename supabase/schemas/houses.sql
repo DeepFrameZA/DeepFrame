@@ -2,7 +2,7 @@ create table public.houses (
   id uuid primary key default gen_random_uuid(),
   unit_number text unique not null,
   client_surname text not null,
-  client_contact_number text unique not null check (client_contact_number ~ '^\d{10}$'),
+  client_contact_number text unique not null check (client_contact_number ~ '^(\+[1-9]\d{6,14}|[0-9]{10})$'),
   notes text,
   user_id uuid references auth.users(id) on delete cascade,
   created_at timestamptz default now(),

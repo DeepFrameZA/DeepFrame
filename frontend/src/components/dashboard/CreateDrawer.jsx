@@ -3,6 +3,12 @@ import CreateField from "../management/CreateField";
 import { createHouse } from "../../core/services/houseService";
 import { useHouses } from "../../core/HouseContext";
 import toast from "react-hot-toast";
+import { getErrorMessage, getDevErrorMessage } from "../../core/utils/message";
+import {
+  validateUnitNumber,
+  validateSurname,
+  validatePhone,
+} from "../../core/utils/validation";
 
 const ContactIcon = () => (
   <svg
@@ -36,34 +42,37 @@ const CreateDrawer = ({ onClose }) => {
 
   const submitCreateHouse = async () => {
     const { unit_number, client_surname, client_contact_number } = newHouse;
-    if (
-      !unit_number.trim() ||
-      !client_surname.trim() ||
-      !client_contact_number.trim()
-    ) {
-      toast.error(
-        "Please provide unit number, client surname and contact number",
-      );
+    const unit = validateUnitNumber(unit_number);
+    if (!unit.valid) {
+      toast.error(unit.error);
       return;
     }
-    if (!/^\d{10}$/.test(client_contact_number.trim())) {
-      toast.error("Contact number must be exactly 10 digits");
+    const surname = validateSurname(client_surname);
+    if (!surname.valid) {
+      toast.error(surname.error);
+      return;
+    }
+    const phone = validatePhone(client_contact_number);
+    if (!phone.valid) {
+      toast.error(phone.error);
       return;
     }
 
     setCreatingHouse(true);
     const payload = {
-      unit_number: unit_number.trim(),
-      client_surname: client_surname.trim(),
-      client_contact_number: client_contact_number.trim(),
+      unit_number: unit.value,
+      client_surname: surname.value,
+      client_contact_number: phone.value,
     };
     const createPromise = createHouse(payload);
 
     try {
       const created = await toast.promise(createPromise, {
         loading: "Creating house...",
-        success: "House created!",
-        error: (err) => err?.message ?? "Create failed",
+        success: (data) => `House MH ${data.unit_number} created!`,
+        error: (err) =>
+          getDevErrorMessage(err) ??
+          getErrorMessage(err, "Could not create house"),
       });
       addHouseLocal(created);
       setNewHouse({
@@ -112,17 +121,16 @@ const CreateDrawer = ({ onClose }) => {
             setNewHouse((p) => ({ ...p, client_contact_number: v }))
           }
           type="tel"
-          pattern="[0-9]*"
-          minLength="10"
-          maxLength="10"
+          tel
+          region=""
           icon={<ContactIcon />}
         />
       </div>
 
       <div className="flex justify-end items-center w-full mt-6 mb-2">
-          <button
-            className="btn btn-primary focus-within:outline-0 flex gap-y-4"
-            disabled={creatingHouse}
+        <button
+          className="btn btn-primary focus-within:outline-0 flex gap-y-4"
+          disabled={creatingHouse}
           onClick={(e) => {
             e.preventDefault();
             submitCreateHouse();

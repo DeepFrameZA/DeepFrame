@@ -1,7 +1,7 @@
 create or replace function public.set_owner_user_id()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 begin

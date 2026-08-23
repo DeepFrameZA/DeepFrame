@@ -3,6 +3,8 @@ import { deleteHouse } from "../core/services/houseService";
 import toast from "react-hot-toast";
 import { useHouses } from "../core/HouseContext";
 import EditIcon from "../components/EditIcon";
+import { getErrorMessage, getDevErrorMessage } from "../core/utils/message";
+import { formatPhoneDisplay } from "../core/utils/validation";
 
 const UnitInfoCard = ({
   className = "",
@@ -23,8 +25,8 @@ const UnitInfoCard = ({
     try {
       await toast.promise(deletePromise, {
         loading: `Deleting house ${unitNumber}...`,
-        success: "House deleted!",
-        error: (err) => err?.message ?? "Delete failed",
+        success: `House MH ${unit_number} deleted!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete house"),
       });
       deleteHouseLocal(id);
     } catch (error) {
@@ -41,14 +43,15 @@ const UnitInfoCard = ({
             <h2 className="text-2xl font-bold text-center text-base-content">
               {unit_number ? `MH ${unit_number}` : "Unit Number"}
             </h2>
-            <DeleteButton
-              buttonClass="btn-sm btn-ghost"
-              iconClass="fill-error w-5 h-5"
-              headingPrefix="Are you sure you want to delete house"
-              itemName={unit_number}
-              uniqueId={uniqueId}
-              onConfirm={() => submitDeleteHouse(uniqueId, unit_number)}
-            />
+              <DeleteButton
+                buttonClass="btn-sm btn-ghost"
+                iconClass="fill-error w-5 h-5"
+                itemType="house"
+                itemName={`MH ${unit_number}`}
+                warning="This will also permanently delete all of its areas and surfaces."
+                uniqueId={uniqueId}
+                onConfirm={() => submitDeleteHouse(uniqueId, unit_number)}
+              />
           </div>
           <div className="grid grid-cols-2">
             <div className="">
@@ -62,7 +65,7 @@ const UnitInfoCard = ({
                 {client_surname || "Surname"}
               </p>
               <p className="pr-2 mb-3 text-end">
-                {client_contact_number || "Contact Number"}
+                {formatPhoneDisplay(client_contact_number)}
               </p>
             </div>
           </div>

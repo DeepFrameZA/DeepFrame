@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../core/AuthContext";
 import ThemeSwitch from "../../components/ThemeSwitch";
+import { toast } from "react-hot-toast";
+import { validateEmail } from "../../core/utils/validation";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -18,6 +20,11 @@ export default function Login() {
         className="w-full max-w-xs md:max-w-sm space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
+          const email = validateEmail(form.email);
+          if (!email.valid) {
+            toast.error(email.error);
+            return;
+          }
           try {
             await signIn(form);
             navigate("/");

@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.112.0",
     "@tailwindcss/vite": "^4.3.3",
     "fuse.js": "^7.5.0",
+    "libphonenumber-js": "^1.13.11",
     "motion": "^13.0.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

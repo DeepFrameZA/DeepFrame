@@ -1,4 +1,5 @@
 import FloatingInput from "./FloatingInput";
+import { formatPhoneInput } from "../../core/utils/validation";
 
 const CreateField = ({
   label,
@@ -9,7 +10,16 @@ const CreateField = ({
   minLength,
   maxLength,
   icon,
+  tel,
+  region,
+  min,
+  max,
+  step,
 }) => {
+  const handleChange = (e) => {
+    const raw = e.target.value;
+    onChange(tel ? formatPhoneInput(raw, region) : raw);
+  };
   return (
     <FloatingInput label={label} icon={icon}>
       <input
@@ -18,10 +28,13 @@ const CreateField = ({
         className=""
         required
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        pattern={pattern}
+        onChange={handleChange}
+        pattern={tel ? undefined : pattern}
         minLength={minLength}
-        maxLength={maxLength}
+        maxLength={tel ? undefined : maxLength}
+        min={min}
+        max={max}
+        step={step}
       />
     </FloatingInput>
   );

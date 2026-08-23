@@ -1,16 +1,30 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import DeleteIcon from "../DeleteIcon";
 
 const DeleteButton = ({
   buttonLabel,
-  headingPrefix,
+  itemType = "item",
   itemName,
+  warning,
   uniqueId,
   onConfirm,
   buttonClass,
   iconClass,
 }) => {
   const dialogRef = useRef(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleConfirm = async (e) => {
+    e.preventDefault();
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+      dialogRef.current?.close();
+    }
+  };
 
   return (
     <>
@@ -29,25 +43,28 @@ const DeleteButton = ({
       <dialog ref={dialogRef} className="modal modal-middle">
         <div className="modal-box">
           <h3 className="font-semibold text-lg mb-6">
-            {headingPrefix}{" "}
+            Delete {itemType}{" "}
             <span className="font-bold text-xl">{itemName}</span>?
           </h3>
-          <p className="">This action is permanent and not reversible.</p>
+          <p className="">This action is permanent and cannot be undone.</p>
+          {warning ? (
+            <p className="mt-2 text-sm opacity-80">{warning}</p>
+          ) : null}
           <div className="modal-action flex justify-end gap-y-4">
             <form method="dialog">
-              <button className="btn btn-sm focus-within:outline-0">
+              <button
+                className="btn btn-sm focus-within:outline-0"
+                disabled={deleting}
+              >
                 Cancel
               </button>
             </form>
             <button
               className="btn btn-error btn-sm"
-              onClick={(e) => {
-                e.preventDefault();
-                onConfirm();
-                dialogRef.current?.close();
-              }}
+              onClick={handleConfirm}
+              disabled={deleting}
             >
-              <span className="text-error-content">Confirm</span>
+              <span className="text-error-content">Delete</span>
               <DeleteIcon
                 unique_id={uniqueId}
                 className="w-4 h-4 fill-error-content"

@@ -20,7 +20,9 @@ createRoot(document.getElementById("root")).render(
               style: {
                 background: "var(--color-base-100)",
                 color: "var(--color-base-content)",
+                minWidth: "250px",
               },
+              error: { duration: 5000 },
             }}
           />
         </HouseProvider>

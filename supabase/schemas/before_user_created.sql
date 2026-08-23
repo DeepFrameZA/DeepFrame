@@ -1,6 +1,7 @@
 create or replace function public.before_user_created(event jsonb)
 returns jsonb
 language plpgsql
+security invoker
 set search_path = ''
 as $$
 declare

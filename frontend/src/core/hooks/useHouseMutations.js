@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useHouses } from "../HouseContext";
+import { getErrorMessage, getDevErrorMessage, capitalize } from "../utils/message";
+import { validateName } from "../utils/validation";
 import {
   updateHouse,
   updateArea,
@@ -60,6 +62,7 @@ const useHouseMutations = (house) => {
   const [savingField, setSavingField] = useState(null);
   const [creatingAreaId, setCreatingAreaId] = useState(null);
   const [creatingSurfaceId, setCreatingSurfaceId] = useState(null);
+  const originalValueRef = useRef({});
 
   // OPTIMISTIC UPDATE, NO REFETCH (by design).
   const handleSaveEntity = async (
@@ -73,7 +76,7 @@ const useHouseMutations = (house) => {
     remoteValue = newValue,
   ) => {
     const fieldName = fieldKey.split("_").slice(1).join("_");
-    const oldValue = fieldValues[fieldKey];
+    const oldValue = originalValueRef.current[fieldKey] ?? fieldValues[fieldKey];
 
     setSavingField(fieldKey);
 
@@ -85,9 +88,10 @@ const useHouseMutations = (house) => {
     try {
       await toast.promise(savePromise, {
         loading: `Saving ${displayName}...`,
-        success: `${displayName} saved!`,
-        error: (err) => err?.message ?? "Save failed",
+        success: `${capitalize(displayName)} updated!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not save changes"),
       });
+      originalValueRef.current[fieldKey] = newValue;
       setFieldValues((prev) => ({ ...prev, [fieldKey]: newValue }));
       setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
     } catch (error) {
@@ -100,23 +104,23 @@ const useHouseMutations = (house) => {
     }
   };
 
-  const saveHouseField = (fieldKey, displayName) =>
+  const saveHouseField = (fieldKey, displayName, newValue) =>
     handleSaveEntity(
       updateHouse,
       updateHouseLocal,
       house.id,
       fieldKey,
-      fieldValues[fieldKey],
+      newValue ?? fieldValues[fieldKey],
       displayName,
     );
 
-  const saveAreaField = (areaId, fieldKey, displayName) =>
+  const saveAreaField = (areaId, fieldKey, displayName, newValue) =>
     handleSaveEntity(
       updateArea,
       updateAreaLocal,
       areaId,
       fieldKey,
-      fieldValues[fieldKey],
+      newValue ?? fieldValues[fieldKey],
       displayName,
       [house.id],
     );
@@ -141,18 +145,19 @@ const useHouseMutations = (house) => {
     );
 
   const submitAddArea = async (name) => {
-    if (!name?.trim()) {
-      toast.error("Please provide an area name");
+    const result = validateName(name, "Area name");
+    if (!result.valid) {
+      toast.error(result.error);
       return;
     }
     setCreatingAreaId(house.id);
-    const areaData = { house_id: house.id, name: name.trim() };
+    const areaData = { house_id: house.id, name: result.value };
     const createPromise = createArea(areaData);
     try {
       const newArea = await toast.promise(createPromise, {
         loading: "Creating area...",
-        success: "Area created!",
-        error: (err) => err?.message ?? "Create failed",
+        success: `Area "${result.value}" created!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not create area"),
       });
       addAreaLocal(house.id, newArea);
       setFieldValues((prev) => ({
@@ -171,8 +176,8 @@ const useHouseMutations = (house) => {
     try {
       await toast.promise(deletePromise, {
         loading: `Deleting area ${areaName}...`,
-        success: "Area deleted!",
-        error: (err) => err?.message ?? "Delete failed",
+        success: `Area "${areaName}" deleted!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete area"),
       });
       deleteAreaLocal(house.id, areaId);
     } catch (error) {
@@ -181,18 +186,19 @@ const useHouseMutations = (house) => {
   };
 
   const submitAddSurface = async (areaId, name) => {
-    if (!name?.trim()) {
-      toast.error("Please provide a surface name");
+    const result = validateName(name, "Surface name");
+    if (!result.valid) {
+      toast.error(result.error);
       return;
     }
     setCreatingSurfaceId(areaId);
-    const surfaceData = { area_id: areaId, name: name.trim() };
+    const surfaceData = { area_id: areaId, name: result.value };
     const createPromise = createSurface(surfaceData);
     try {
       const newSurface = await toast.promise(createPromise, {
         loading: "Creating surface...",
-        success: "Surface created!",
-        error: (err) => err?.message ?? "Create failed",
+        success: `Surface "${result.value}" created!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not create surface"),
       });
       addSurfaceLocal(house.id, areaId, newSurface);
       setFieldValues((prev) => ({
@@ -215,8 +221,8 @@ const useHouseMutations = (house) => {
     try {
       await toast.promise(deletePromise, {
         loading: `Deleting surface ${surfaceName}...`,
-        success: "Surface deleted!",
-        error: (err) => err?.message ?? "Delete failed",
+        success: `Surface "${surfaceName}" deleted!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete surface"),
       });
       deleteSurfaceLocal(house.id, areaId, surfaceId);
     } catch (error) {
@@ -229,8 +235,8 @@ const useHouseMutations = (house) => {
     try {
       await toast.promise(deletePromise, {
         loading: `Deleting house ${house.unit_number}...`,
-        success: "House deleted!",
-        error: (err) => err?.message ?? "Delete failed",
+        success: `House MH ${house.unit_number} deleted!`,
+        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete house"),
       });
       deleteHouseLocal(house.id);
     } catch (error) {
@@ -241,10 +247,13 @@ const useHouseMutations = (house) => {
   const setValue = (fieldKey, value) =>
     setFieldValues((prev) => ({ ...prev, [fieldKey]: value }));
 
-  const beginEdit = (fieldKey) =>
+  const beginEdit = (fieldKey) => {
     setEditingField((prev) => ({ ...prev, [fieldKey]: true }));
+    originalValueRef.current[fieldKey] = fieldValues[fieldKey];
+  };
 
   const beginEditClear = (fieldKey) => {
+    originalValueRef.current[fieldKey] = fieldValues[fieldKey];
     setFieldValues((prev) => ({ ...prev, [fieldKey]: "" }));
     setEditingField((prev) => ({ ...prev, [fieldKey]: true }));
   };
