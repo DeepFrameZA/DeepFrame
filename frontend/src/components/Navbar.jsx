@@ -2,16 +2,16 @@ import { NavLink, useLocation } from "react-router";
 import ThemeSwitch from "../components/ThemeSwitch";
 import useHasScrolled from "../core/hooks/useHasScrolled";
 import { APP_ROUTES, isPathInSection } from "../core/routes";
+import { useAuth } from "../core/AuthContext";
 
 const Navbar = ({ className = "", content }) => {
-  // const Navbar = ({ className = "", isDrawerOpen, setIsDrawerOpen, content }) => {
   const location = useLocation();
   const isListActive = isPathInSection(
     location.pathname,
     APP_ROUTES.MANAGEMENT,
   );
-
   const hasScrolled = useHasScrolled();
+  const { user, role, signOut } = useAuth();
 
   return (
     <>
@@ -130,7 +130,22 @@ const Navbar = ({ className = "", content }) => {
                 </ul>
               </div>
             </div>
-            <div className="navbar-end pr-2">
+            <div className="navbar-end pr-2 gap-2">
+              {user ? (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="hidden md:inline">
+                    {user.email} ({role})
+                  </span>
+                  <button className="btn btn-ghost btn-sm" onClick={() => signOut()}>
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm">
+                  <NavLink className="link" to="/login">Sign in</NavLink>
+                  <NavLink className="link" to="/signup">Request account</NavLink>
+                </div>
+              )}
               <ThemeSwitch className="" />
             </div>
           </div>

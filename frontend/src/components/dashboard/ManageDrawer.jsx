@@ -6,6 +6,15 @@ import DeleteButton from "../management/DeleteButton";
 import FloatingInput from "../management/FloatingInput";
 import { useHouses } from "../../core/HouseContext";
 import useHouseMutations from "../../core/hooks/useHouseMutations";
+import toast from "react-hot-toast";
+import {
+  validateUnitNumber,
+  validateSurname,
+  validatePhone,
+  validateName,
+  validateDimension,
+  validateNotes,
+} from "../../core/utils/validation";
 
 const AddAreaRow = ({ onSubmit, creating }) => {
   const [name, setName] = useState("");
@@ -21,7 +30,7 @@ const AddAreaRow = ({ onSubmit, creating }) => {
         />
       </FloatingInput>
       <button
-        className="btn btn-primary focus-within:outline-0"
+        className="btn btn-outline btn-primary focus-within:outline-0"
         disabled={creating}
         onClick={() => {
           onSubmit(name);
@@ -52,7 +61,7 @@ const AddSurfaceRow = ({ onSubmit, creating }) => {
         />
       </FloatingInput>
       <button
-        className="btn btn-primary focus-within:outline-0"
+        className="btn btn-outline btn-primary focus-within:outline-0"
         disabled={creating}
         onClick={() => {
           onSubmit(name);
@@ -79,6 +88,18 @@ const ManageDrawer = ({ house, onClose }) => {
   const clientSurnameFieldKey = `${house.id}_client_surname`;
   const clientContactNumberFieldKey = `${house.id}_client_contact_number`;
   const notesFieldKey = `${house.id}_notes`;
+
+  const saveField = (fieldKey, displayName, validator) => {
+    const result = validator(mut.fieldValues[fieldKey]);
+    if (!result.valid) {
+      toast.error(result.error);
+      return;
+    }
+    if (result.value !== mut.fieldValues[fieldKey]) {
+      mut.setValue(fieldKey, result.value);
+    }
+    mut.saveHouseField(fieldKey, displayName, result.value);
+  };
 
   return (
     <div className="bg-base-100 min-h-full w-120 max-w-[95vw] h-full overflow-y-auto p-6">
@@ -110,7 +131,9 @@ const ManageDrawer = ({ house, onClose }) => {
           uniqueId={`save_unit_number_field_${house.unit_number}`}
           onChange={(v) => mut.setValue(unitNumberFieldKey, v)}
           onBeginEdit={() => mut.beginEdit(unitNumberFieldKey)}
-          onSave={() => mut.saveHouseField(unitNumberFieldKey, "unit number")}
+          onSave={() =>
+            saveField(unitNumberFieldKey, "unit number", validateUnitNumber)
+          }
         />
 
         <ManagedTextField
@@ -124,7 +147,7 @@ const ManageDrawer = ({ house, onClose }) => {
           onChange={(v) => mut.setValue(clientSurnameFieldKey, v)}
           onBeginEdit={() => mut.beginEdit(clientSurnameFieldKey)}
           onSave={() =>
-            mut.saveHouseField(clientSurnameFieldKey, "client surname")
+            saveField(clientSurnameFieldKey, "client surname", validateSurname)
           }
         />
 
@@ -139,12 +162,13 @@ const ManageDrawer = ({ house, onClose }) => {
           onChange={(v) => mut.setValue(clientContactNumberFieldKey, v)}
           onBeginEdit={() => mut.beginEdit(clientContactNumberFieldKey)}
           onSave={() =>
-            mut.saveHouseField(clientContactNumberFieldKey, "contact number")
+            saveField(clientContactNumberFieldKey, "contact number", (v) =>
+              validatePhone(v),
+            )
           }
           type="tel"
-          pattern="[0-9]*"
-          minLength="10"
-          maxLength="10"
+          tel
+          region=""
         />
 
         <ManagedTextAreaField
@@ -157,7 +181,14 @@ const ManageDrawer = ({ house, onClose }) => {
           uniqueId={`save_notes_field_${house.unit_number}`}
           onChange={(v) => mut.setValue(notesFieldKey, v)}
           onBeginEdit={() => mut.beginEdit(notesFieldKey)}
-          onSave={() => mut.saveHouseField(notesFieldKey, "notes")}
+          onSave={() => {
+            const result = validateNotes(mut.fieldValues[notesFieldKey]);
+            if (!result.valid) {
+              toast.error(result.error);
+              return;
+            }
+            mut.saveHouseField(notesFieldKey, "notes", result.value);
+          }}
         />
       </div>
 
@@ -195,9 +226,25 @@ const ManageDrawer = ({ house, onClose }) => {
                   uniqueId={`save_unit_${house.unit_number}_area_name_field_${area.id}`}
                   onChange={(v) => mut.setValue(areaNameFieldKey, v)}
                   onBeginEdit={() => mut.beginEdit(areaNameFieldKey)}
-                  onSave={() =>
-                    mut.saveAreaField(area.id, areaNameFieldKey, "area name")
-                  }
+                  onSave={() => {
+                    const result = validateName(
+                      mut.fieldValues[areaNameFieldKey],
+                      "area name",
+                    );
+                    if (!result.valid) {
+                      toast.error(result.error);
+                      return;
+                    }
+                    if (result.value !== mut.fieldValues[areaNameFieldKey]) {
+                      mut.setValue(areaNameFieldKey, result.value);
+                    }
+                    mut.saveAreaField(
+                      area.id,
+                      areaNameFieldKey,
+                      "area name",
+                      result.value,
+                    );
+                  }}
                 />
 
                 <div className="font-semibold text-sm my-6">Surfaces</div>
@@ -232,20 +279,28 @@ const ManageDrawer = ({ house, onClose }) => {
                               mut.setValue(surfaceNameFieldKey, v)
                             }
                             onBeginEdit={() =>
-                              mut.beginEditClear(surfaceNameFieldKey)
+                              mut.beginEdit(surfaceNameFieldKey)
                             }
                             onSave={() => {
-                              const nameValue =
-                                mut.fieldValues[surfaceNameFieldKey];
-                              const nameToSave =
-                                nameValue && nameValue.trim()
-                                  ? nameValue
-                                  : surface.name;
+                              const result = validateName(
+                                mut.fieldValues[surfaceNameFieldKey],
+                                "surface name",
+                              );
+                              if (!result.valid) {
+                                toast.error(result.error);
+                                return;
+                              }
+                              if (
+                                result.value !==
+                                mut.fieldValues[surfaceNameFieldKey]
+                              ) {
+                                mut.setValue(surfaceNameFieldKey, result.value);
+                              }
                               mut.saveSurfaceField(
                                 area.id,
                                 surface.id,
                                 surfaceNameFieldKey,
-                                nameToSave,
+                                result.value,
                                 "surface name",
                               );
                             }}
@@ -297,24 +352,29 @@ const ManageDrawer = ({ house, onClose }) => {
                               mut.setValue(surfaceLengthFieldKey, v)
                             }
                             onBeginEdit={() =>
-                              mut.beginEditClear(surfaceLengthFieldKey)
+                              mut.beginEdit(surfaceLengthFieldKey)
                             }
                             onSave={() => {
-                              const lengthValue =
-                                mut.fieldValues[surfaceLengthFieldKey];
-                              const lengthToSave =
-                                lengthValue && lengthValue.trim()
-                                  ? lengthValue
-                                  : surface.surface_length;
+                              const result = validateDimension(
+                                mut.fieldValues[surfaceLengthFieldKey],
+                                "Surface length",
+                              );
+                              if (!result.valid) {
+                                toast.error(result.error);
+                                return;
+                              }
                               mut.saveSurfaceField(
                                 area.id,
                                 surface.id,
                                 surfaceLengthFieldKey,
-                                lengthToSave,
+                                result.value,
                                 "Surface length",
                               );
                             }}
                             type="number"
+                            min="0.01"
+                            max="100000"
+                            step="0.01"
                           />
 
                           <ManagedTextField
@@ -329,24 +389,29 @@ const ManageDrawer = ({ house, onClose }) => {
                               mut.setValue(surfaceWidthFieldKey, v)
                             }
                             onBeginEdit={() =>
-                              mut.beginEditClear(surfaceWidthFieldKey)
+                              mut.beginEdit(surfaceWidthFieldKey)
                             }
                             onSave={() => {
-                              const widthValue =
-                                mut.fieldValues[surfaceWidthFieldKey];
-                              const widthToSave =
-                                widthValue && widthValue.trim()
-                                  ? widthValue
-                                  : surface.surface_width;
+                              const result = validateDimension(
+                                mut.fieldValues[surfaceWidthFieldKey],
+                                "Surface width",
+                              );
+                              if (!result.valid) {
+                                toast.error(result.error);
+                                return;
+                              }
                               mut.saveSurfaceField(
                                 area.id,
                                 surface.id,
                                 surfaceWidthFieldKey,
-                                widthToSave,
+                                result.value,
                                 "Surface width",
                               );
                             }}
                             type="number"
+                            min="0.01"
+                            max="100000"
+                            step="0.01"
                           />
 
                           <ManagedTextField
@@ -361,24 +426,29 @@ const ManageDrawer = ({ house, onClose }) => {
                               mut.setValue(surfaceHeightFieldKey, v)
                             }
                             onBeginEdit={() =>
-                              mut.beginEditClear(surfaceHeightFieldKey)
+                              mut.beginEdit(surfaceHeightFieldKey)
                             }
                             onSave={() => {
-                              const heightValue =
-                                mut.fieldValues[surfaceHeightFieldKey];
-                              const heightToSave =
-                                heightValue && heightValue.trim()
-                                  ? heightValue
-                                  : surface.surface_height;
+                              const result = validateDimension(
+                                mut.fieldValues[surfaceHeightFieldKey],
+                                "Surface height",
+                              );
+                              if (!result.valid) {
+                                toast.error(result.error);
+                                return;
+                              }
                               mut.saveSurfaceField(
                                 area.id,
                                 surface.id,
                                 surfaceHeightFieldKey,
-                                heightToSave,
+                                result.value,
                                 "Surface height",
                               );
                             }}
                             type="number"
+                            min="0.01"
+                            max="100000"
+                            step="0.01"
                           />
                         </div>
 
@@ -386,7 +456,7 @@ const ManageDrawer = ({ house, onClose }) => {
                         <div className="flex justify-end items-center w-full mb-2">
                           <DeleteButton
                             buttonLabel="Delete Surface"
-                            headingPrefix="Are you sure you want to delete"
+                            itemType="surface"
                             itemName={surface.name}
                             uniqueId={surface.id}
                             onConfirm={() =>
@@ -407,7 +477,7 @@ const ManageDrawer = ({ house, onClose }) => {
                 <div className="flex justify-end items-center w-full mb-2">
                   <DeleteButton
                     buttonLabel="Delete Area"
-                    headingPrefix="Are you sure you want to delete"
+                    itemType="area"
                     itemName={area.name}
                     uniqueId={area.id}
                     onConfirm={() => mut.submitDeleteArea(area.id, area.name)}

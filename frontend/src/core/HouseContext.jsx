@@ -37,10 +37,14 @@ export function HouseProvider({ children }) {
   }
 
   function addHouseLocal(newHouse) {
-    setHouses((prevHouses) => [
-      { ...newHouse, allAreas: newHouse.allAreas ?? [] },
-      ...prevHouses,
-    ]);
+    setHouses((prevHouses) => {
+      const next = [
+        ...prevHouses,
+        { ...newHouse, allAreas: [], allSurfaces: [], selectedTiles: [] },
+      ];
+      next.sort((a, b) => a.unit_number - b.unit_number);
+      return next;
+    });
   }
 
   function updateHouseLocal(id, updates) {
@@ -49,14 +53,18 @@ export function HouseProvider({ children }) {
     );
   }
 
-  function updateAreaLocal(id, updates) {
+  function updateAreaLocal(houseId, areaId, updates) {
     setHouses((prevHouses) =>
-      prevHouses.map((house) => ({
-        ...house,
-        allAreas: house.allAreas.map((area) =>
-          area.id === id ? { ...area, ...updates } : area
-        ),
-      }))
+      prevHouses.map((house) =>
+        house.id === houseId
+          ? {
+              ...house,
+              allAreas: house.allAreas.map((area) =>
+                area.id === areaId ? { ...area, ...updates } : area
+              ),
+            }
+          : house
+      )
     );
   }
 

@@ -34,7 +34,7 @@ const Dashboard = ({ className = "" }) => {
           <div className="flex flex-wrap justify-center gap-6">
             <div className="fixed bottom-6 left-6 z-2">
               <button
-                className="btn btn-md btn-square btn-primary focus-within:outline-0"
+                className="btn btn-md btn-square btn-primary lg:btn-outline focus-within:outline-0"
                 onClick={openCreate}
                 aria-label="New"
               >

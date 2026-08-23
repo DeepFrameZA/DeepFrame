@@ -1,15 +1,15 @@
 with 
   -- Houses
-  h24 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('24', 'Kuun', '1234567890', 'Still to choose garage tiles') returning id),
-  h25 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('25', 'Abel', '0123456789', '1') returning id),
-  h26 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('26', 'Diedericks', '9012345678', '2') returning id),
-  h27 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('27', 'Zulu', '8901234567', '3') returning id),
-  h28 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('28', 'Molopa', '7890123456', '4') returning id),
-  h29 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('29', 'Du Preez', '6789012345', '5') returning id),
-  h30 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('30', 'Van Vuuren', '5678901234', '6') returning id),
-  h31 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('31', 'Odendaal', '4567890123', '7') returning id),
-  h32 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('32', 'Strydom', '3456789012', '8') returning id),
-  h33 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('33', 'Nkosi', '2345678901', '9') returning id),
+  h24 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('24', 'Kuun', '+27824572499', 'Still to choose garage tiles') returning id),
+  h25 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('25', 'Abel', '+27812345678', '1') returning id),
+  h26 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('26', 'Diedericks', '+447911123456', '2') returning id),
+  h27 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('27', 'Zulu', '+27791234567', '3') returning id),
+  h28 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('28', 'Molopa', '+27611234567', '4') returning id),
+  h29 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('29', 'Du Preez', '+27823456789', '5') returning id),
+  h30 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('30', 'Van Vuuren', '+12137774253', '6') returning id),
+  h31 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('31', 'Odendaal', '+27774567890', '7') returning id),
+  h32 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('32', 'Strydom', '+27834567890', '8') returning id),
+  h33 as (insert into public.houses (unit_number, client_surname, client_contact_number, notes) values ('33', 'Nkosi', '+27674567890', '9') returning id),
 
   -- Tiles (Mock data based on CTM website patterns)
   tiles_inserted as (
@@ -73,3 +73,24 @@ values
   ((select id from areas_inserted where name = 'Hallway' and house_id = (select id from h31) limit 1), 'tile_11', 9, 18, 2.6, 'Floor'),
   ((select id from areas_inserted where name = 'Spare toilet' and house_id = (select id from h32) limit 1), 'tile_12', 5, 17, 2.6, 'South wall'),
   ((select id from areas_inserted where name = 'Bedroom 1' and house_id = (select id from h33) limit 1), 'tile_13', 6, 12, 2.6, 'floor');
+
+-- Seed a reusable invite code so signup (which validates via the
+-- before_user_created auth hook) works after a db reset. Runs as service_role,
+-- which bypasses the invite_codes RLS.
+insert into public.invite_codes (code, max_uses, used_count)
+values ('DEEPFRAME-LOCAL', 1000, 0)
+on conflict (code) do nothing;
+
+-- Backfill user_id for seed data so RLS does not hide demo rows after db reset.
+DO $$
+DECLARE
+  admin_user_id uuid;
+BEGIN
+  SELECT id INTO admin_user_id FROM auth.users LIMIT 1;
+  IF admin_user_id IS NOT NULL THEN
+    UPDATE public.houses    SET user_id = admin_user_id WHERE user_id IS NULL;
+    UPDATE public.areas     SET user_id = admin_user_id WHERE user_id IS NULL;
+    UPDATE public.surfaces  SET user_id = admin_user_id WHERE user_id IS NULL;
+  END IF;
+END;
+$$;

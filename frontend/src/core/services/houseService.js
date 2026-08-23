@@ -1,4 +1,5 @@
 import { supabase } from "../supabase/supabase";
+import { requireAuthSession } from "../supabase/withAuth";
 
 /**
  * DATA ENRICHMENT LAYER
@@ -68,6 +69,7 @@ export async function getHouse(id) {
 }
 
 export async function createHouse(house) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("houses")
     .insert(house)
@@ -79,6 +81,7 @@ export async function createHouse(house) {
 }
 
 export async function updateHouse(id, updates) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("houses")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -91,12 +94,20 @@ export async function updateHouse(id, updates) {
 }
 
 export async function deleteHouse(id) {
-  const { error } = await supabase.from("houses").delete().eq("id", id);
+  await requireAuthSession();
+  const { data, error } = await supabase
+    .from("houses")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("House not found or not permitted");
   return true;
 }
 
 export async function createArea(area) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("areas")
     .insert(area)
@@ -108,6 +119,7 @@ export async function createArea(area) {
 }
 
 export async function updateArea(id, updates) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("areas")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -120,12 +132,20 @@ export async function updateArea(id, updates) {
 }
 
 export async function deleteArea(id) {
-  const { error } = await supabase.from("areas").delete().eq("id", id);
+  await requireAuthSession();
+  const { data, error } = await supabase
+    .from("areas")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("Area not found or not permitted");
   return true;
 }
 
 export async function createSurface(surface) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("surfaces")
     .insert(surface)
@@ -137,6 +157,7 @@ export async function createSurface(surface) {
 }
 
 export async function updateSurface(id, updates) {
+  await requireAuthSession();
   const { data, error } = await supabase
     .from("surfaces")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -149,8 +170,15 @@ export async function updateSurface(id, updates) {
 }
 
 export async function deleteSurface(id) {
-  const { error } = await supabase.from("surfaces").delete().eq("id", id);
+  await requireAuthSession();
+  const { data, error } = await supabase
+    .from("surfaces")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("Surface not found or not permitted");
   return true;
 }
 
