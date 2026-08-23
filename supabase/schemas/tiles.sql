@@ -9,3 +9,10 @@ create table public.tiles (
   updated_at timestamptz default now()
 );
 
+alter table public.tiles enable row level security;
+
+create policy "Tiles readable by authenticated users"
+  on public.tiles for select
+  to authenticated
+  using (true);
+

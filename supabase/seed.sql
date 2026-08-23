@@ -73,3 +73,24 @@ values
   ((select id from areas_inserted where name = 'Hallway' and house_id = (select id from h31) limit 1), 'tile_11', 9, 18, 2.6, 'Floor'),
   ((select id from areas_inserted where name = 'Spare toilet' and house_id = (select id from h32) limit 1), 'tile_12', 5, 17, 2.6, 'South wall'),
   ((select id from areas_inserted where name = 'Bedroom 1' and house_id = (select id from h33) limit 1), 'tile_13', 6, 12, 2.6, 'floor');
+
+-- Seed a reusable invite code so signup (which validates via the
+-- before_user_created auth hook) works after a db reset. Runs as service_role,
+-- which bypasses the invite_codes RLS.
+insert into public.invite_codes (code, max_uses, used_count)
+values ('DEEPFRAME-LOCAL', 1000, 0)
+on conflict (code) do nothing;
+
+-- Backfill user_id for seed data so RLS does not hide demo rows after db reset.
+DO $$
+DECLARE
+  admin_user_id uuid;
+BEGIN
+  SELECT id INTO admin_user_id FROM auth.users LIMIT 1;
+  IF admin_user_id IS NOT NULL THEN
+    UPDATE public.houses    SET user_id = admin_user_id WHERE user_id IS NULL;
+    UPDATE public.areas     SET user_id = admin_user_id WHERE user_id IS NULL;
+    UPDATE public.surfaces  SET user_id = admin_user_id WHERE user_id IS NULL;
+  END IF;
+END;
+$$;

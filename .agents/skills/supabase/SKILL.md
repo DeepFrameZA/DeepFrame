@@ -124,6 +124,12 @@ First decide which schema workflow the project uses.
 
 Use this when `supabase/schemas/` exists or `config.toml` sets `schema_paths`. Edit the desired schema state in those files, then generate and review the migration. Do not start by hand-writing a migration. See the [Declarative database schemas guide](https://supabase.com/docs/guides/local-development/declarative-database-schemas).
 
+**After enabling auth or tightening access:** ensure `permissions.sql` still grants the needed tables to the `authenticated` role. Revoking all `anon`/`authenticated` access is a common trap: PostgREST will then return `403` even with a valid bearer token. The safe pattern is:
+
+- `service_role` keeps broad access for server-side/admin use.
+- `authenticated` gets only the tables/operations the logged-in user actually needs.
+- RLS remains the actual row-level filter.
+
 ### Option B: Imperative migrations
 
 Use this when the project does not use declarative schemas.
@@ -136,8 +142,15 @@ Do NOT use `apply_migration` to change a local database schema — it writes a m
 
 1. **Run advisors** → `supabase db advisors` (CLI v2.81.3+) or MCP `get_advisors`. Fix any issues.
 2. **Review the Security Checklist above** if your changes involve views, functions, triggers, or storage.
-3. **Generate the migration** → `supabase db pull <descriptive-name> --local --yes`
-4. **Verify** → `supabase migration list --local`
+3. **Generate the migration** → `npx supabase db diff --schema public --file supabase/migrations/<descriptive-name>.sql`
+4. **Verify** → `npx supabase db reset`
+
+## Supabase CLI Local Development Gotchas
+
+- The `supabase` binary may not be on PATH. Use `npx supabase ...` instead of bare `supabase ...`.
+- `npx supabase db diff` can fail with a shadow-database port conflict (`Bind for 0.0.0.0:54320 failed`). If that happens, stop and restart: `npx supabase stop && npx supabase db diff ...`
+- `npx supabase db reset` can fail on the first attempt and succeed on retry. If it fails once, retry once before troubleshooting deeper.
+- Local service status output can show contradictory states; if unsure, restart explicitly with `npx supabase stop && npx supabase start`.
 
 ## Reference Guides
 

@@ -1,0 +1,71 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../../core/AuthContext";
+
+export default function Signup() {
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    displayName: "",
+    inviteCode: "",
+  });
+  const { signUp, loading } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <form
+        className="w-full max-w-sm space-y-4"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            await signUp(form);
+            navigate("/login");
+          } catch {
+            // error toast is already shown by AuthContext.signUp
+          }
+        }}
+      >
+        <h1 className="text-xl font-bold">Request account</h1>
+        <input
+          className="input input-bordered w-full"
+          type="text"
+          placeholder="Display name"
+          value={form.displayName}
+          onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
+          required
+        />
+        <input
+          className="input input-bordered w-full"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+          required
+        />
+        <input
+          className="input input-bordered w-full"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+          required
+        />
+        <input
+          className="input input-bordered w-full"
+          type="text"
+          placeholder="Invite code"
+          value={form.inviteCode}
+          onChange={(e) => setForm((f) => ({ ...f, inviteCode: e.target.value.trim() }))}
+          required
+        />
+        <button className="btn btn-primary w-full" type="submit" disabled={loading}>
+          {loading ? "Submitting..." : "Submit request"}
+        </button>
+        <div>
+          <Link to="/login" className="link">Already have an account?</Link>
+        </div>
+      </form>
+    </div>
+  );
+}
