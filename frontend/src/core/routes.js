@@ -1,7 +1,6 @@
 export const APP_ROUTES = {
   DASHBOARD: "/",
   MANAGEMENT: "/management",
-  HOUSE_MANAGER: "/management/manage_houses",
   INVENTORY_MANAGER: "/management/manage_inventory",
   INVENTORY_LIST: "/inventory_list",
 };

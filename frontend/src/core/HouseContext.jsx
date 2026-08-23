@@ -19,6 +19,8 @@ export function HouseProvider({ children }) {
     getAllHouses()
       .then(setHouses)
       .finally(() => setLoading(false));
+    ensureTilesCatalog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function ensureTilesCatalog() {

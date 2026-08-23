@@ -2,8 +2,8 @@ const SearchBar = ({ className = "" }) => {
   return (
     <>
       <div className={`${className} join`}>
-        <label className="input floating-label focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-          <span className="dark:text-[#414342] text-[#d2d2d2]">Search</span>
+        <label className="input floating-label focus-within:outline-0 focus-within:border-primary focus-within:shadow-none">
+          <span className="text-base-content/40">Search</span>
           <svg
             className="h-[1em] opacity-50"
             xmlns="http://www.w3.org/2000/svg"

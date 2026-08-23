@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import useSearch from "../core/hooks/useSearch";
 
 const TILE_SEARCH_KEYS = [
@@ -13,6 +13,7 @@ const TILE_SEARCH_KEYS = [
 const MAX_RESULTS = 50;
 
 const TileCombobox = ({
+  fieldKey,
   catalog = [],
   loading = false,
   disabled = false,
@@ -22,6 +23,7 @@ const TileCombobox = ({
   placeholder = "Search for a tile",
 }) => {
   const [open, setOpen] = useState(false);
+  const popoverRef = useRef(null);
 
   const { filteredData, searchQuery, setSearchQuery } = useSearch(
     catalog,
@@ -33,40 +35,71 @@ const TileCombobox = ({
     [filteredData],
   );
 
+  const popoverId = `tile_popover_${fieldKey}`;
+  const anchorName = `--tile_anchor_${fieldKey}`;
+
+  const showPopover = () => {
+    const el = popoverRef.current;
+    if (el && !el.matches(":popover-open")) {
+      try {
+        el.showPopover();
+      } catch {
+        /* popover already open or unsupported */
+      }
+    }
+    setOpen(true);
+  };
+
+  const hidePopover = () => {
+    const el = popoverRef.current;
+    if (el && el.matches(":popover-open")) {
+      try {
+        el.hidePopover();
+      } catch {
+        /* popover already closed or unsupported */
+      }
+    }
+    setOpen(false);
+  };
+
   const handleSelect = (tile) => {
     setSearchQuery(tile.description ?? tile.sku);
-    setOpen(false);
     onSelect?.(tile);
+    hidePopover();
   };
 
   const isEditing = !disabled;
 
   return (
-    <div
-      className={`dropdown dropdown-bottom w-full ${open ? "dropdown-open" : ""}`}
-    >
-      <label className="input floating-label join-item w-full focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-        <span className="dark:text-[#414342] text-[#d2d2d2]">{label}</span>
+    <div className="w-full">
+      <label className="input floating-label join-item w-full focus-within:outline-0 focus-within:border-primary focus-within:shadow-none">
+        <span className="text-base-content/40">{label}</span>
         <input
           type="text"
           tabIndex={0}
-          role="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={popoverId}
           className="truncate"
           placeholder={placeholder}
           disabled={disabled}
           value={isEditing ? searchQuery : initialDisplay}
+          style={isEditing ? { anchorName } : undefined}
           onChange={(e) => {
             setSearchQuery(e.target.value);
-            setOpen(true);
+            showPopover();
           }}
-          onFocus={() => isEditing && setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 100)}
+          onFocus={() => isEditing && showPopover()}
+          onBlur={() => setTimeout(hidePopover, 120)}
         />
       </label>
       {isEditing && (
         <ul
-          tabIndex="-1"
-          className="dropdown-content scrollbar-none w-full h-25 lg:min-w-max bg-base-200 z-1 p-2 shadow-md shadow-base-300 dark:shadow-none dark:border dark:border-base-300 overflow-y-auto"
+          ref={popoverRef}
+          popover="manual"
+          id={popoverId}
+          style={{ positionAnchor: anchorName }}
+          className="dropdown dropdown-center menu w-full bg-base-200 z-1 p-2 shadow-md shadow-base-300 dark:shadow-lg dark:shadow-black/40 dark:border dark:border-base-content/10 overflow-y-auto max-h-60"
         >
           {loading ? (
             <li className="menu-title">
@@ -80,8 +113,9 @@ const TileCombobox = ({
             results.map((tile) => (
               <li className="" key={tile.sku}>
                 <button
-                  className=" text-xs"
+                  className="text-xs hover:bg-base-100"
                   type="button"
+                  title={tile.description}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSelect(tile)}
                 >

@@ -1,7 +1,15 @@
-const FloatingInput = ({ label, icon, children }) => {
+const FloatingInput = ({
+  label,
+  icon,
+  inputClassName,
+  textarea = false,
+  children,
+}) => {
   return (
-    <label className="input floating-label join-item validator focus-within:outline-0 dark:focus-within:border-[#414342] focus-within:border-[#d2d2d2] focus-within:shadow-none">
-      <span className="dark:text-[#414342] text-[#d2d2d2]">{label}</span>
+    <label
+      className={`${textarea ? "textarea" : "input"} ${inputClassName ? inputClassName : ""} floating-label join-item validator focus-within:outline-0 focus-within:border-primary focus-within:shadow-none`}
+    >
+      <span className="text-base-content/40">{label}</span>
       {icon}
       {children}
     </label>

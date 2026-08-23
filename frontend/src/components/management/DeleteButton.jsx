@@ -7,17 +7,24 @@ const DeleteButton = ({
   itemName,
   uniqueId,
   onConfirm,
+  buttonClass,
+  iconClass,
 }) => {
   const dialogRef = useRef(null);
 
   return (
     <>
       <button
-        className="btn btn-sm btn-error focus-within:outline-0 flex gap-y-4"
+        className={`${buttonClass ? buttonClass : "btn-sm btn-error"} btn focus-within:outline-0 flex gap-y-4`}
         onClick={() => dialogRef.current?.showModal()}
       >
-        <span className="text-error-content">{buttonLabel}</span>
-        <DeleteIcon unique_id={uniqueId} className="w-4 h-4 fill-error-content" />
+        <span className={`text-error-content ${buttonLabel ? "" : "hidden"}`}>
+          {buttonLabel}
+        </span>
+        <DeleteIcon
+          unique_id={uniqueId}
+          className={`${iconClass ? iconClass : "w-4 h-4 fill-error-content"}`}
+        />
       </button>
       <dialog ref={dialogRef} className="modal modal-middle">
         <div className="modal-box">
