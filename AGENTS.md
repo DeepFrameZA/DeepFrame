@@ -29,9 +29,15 @@ Compact guidance for OpenCode sessions. Every line is something an agent would l
 - Mutations flow through `useHouseMutations` → `handleSaveEntity`: local update
   FIRST, then Supabase call wrapped in `toast.promise`, rollback on failure.
   Deliberately NO refetch after save (speed-first). Do not add refetches.
-- Auth: `AuthProvider`/`useAuth` mounted in `main.jsx`. `signUp` hard-codes
-  `role: 'admin'` on the profiles insert (privilege-escalation smell — don't
-  copy). `ProtectedRoute` + `withAuth.js` gate routes; `/management/*` is admin-only.
+- Auth: `AuthProvider`/`useAuth` mounted in `main.jsx`. Client `signUp`
+  inserts ONLY `id` + `display_name` into `profiles` — role is assigned
+  server-side (profiles trigger / permissions), so never set `role` from the
+  client. `signUp` requires an invite code (see Gotchas).
+- `ProtectedRoute` is defined inline in `App.jsx` (not a file) and gates on
+  `useAuth().role`: management routes (`DocumentManager`, `InventoryManager`)
+  require `admin`; the main app requires `admin`/`contractor`/`owner`.
+  `withAuth.js`'s `requireAuthSession()` is a separate server-side guard used by
+  the `houseService` mutators, not for route gating.
 - UI: `App.jsx` → `MainView` layout with `<Outlet/>`; default route `Dashboard`.
   House CRUD happens in daisyUI `drawer-end` `CreateDrawer`/`ManageDrawer`.
   `DocumentManager`/`InventoryManager` are stubs (heading only).
@@ -47,11 +53,22 @@ Compact guidance for OpenCode sessions. Every line is something an agent would l
   is the reusable tile picker.
 
 ## Gotchas / constraints
-- `tiles` table is read-only to authenticated clients (service role only).
-  Never send `user_id` from the client — a SECURITY DEFINER trigger auto-fills
-  it and RLS enforces per-user isolation on houses/areas/surfaces.
+- `tiles` table is read-only to authenticated clients (authenticated gets
+  `select` only per `permissions.sql`; write goes through `service_role`).
+  Note: `houseService.js` still exports `createTile`/`updateTile`/`deleteTile`,
+  but they will fail from the browser — don't call them client-side.
+- `user_id` is never sent from the client: a BEFORE INSERT trigger
+  (`set_owner_user_id`, `security invoker`) fills it from `auth.uid()`, and RLS
+  enforces per-user isolation on houses/areas/surfaces.
+- Signup requires a valid invite code. The `before_user_created` auth hook
+  (enabled in `config.toml`, `supabase/schemas/before_user_created.sql`)
+  validates and consumes an `invite_codes` row; `signUp` throws if none is
+  supplied. You cannot register without one.
 - Bundle exceeds ~500 kB because `@supabase/supabase-js` is in the initial chunk
   (HouseProvider imports it). Lazy routes won't fix it; a manualChunks vendor
   split would.
-- `client_contact_number` must be exactly 10 digits (`/^\d{10}$/`).
-- Git: active work is on the `auth` branch; history is linear, no PR workflow.
+- `client_contact_number` is validated by `validatePhone` (`utils/validation.js`)
+  using `libphonenumber-js` (region `ZA`) and requires international format,
+  e.g. `+27 82 123 4567`. Do NOT reimplement it as a 10-digit `/^\d{10}$/` regex.
+- Git: active branch is `main` (`auth` was merged in; remote `origin/main`
+  exists). No PR workflow — work lands via local merge/commit.

@@ -64,11 +64,17 @@ const DeleteButton = ({
               onClick={handleConfirm}
               disabled={deleting}
             >
-              <span className="text-error-content">Delete</span>
-              <DeleteIcon
-                unique_id={uniqueId}
-                className="w-4 h-4 fill-error-content"
-              />
+              {deleting ? (
+                <span className="loading loading-spinner text-current" />
+              ) : (
+                <>
+                  <span className="text-error-content">Delete</span>
+                  <DeleteIcon
+                    unique_id={uniqueId}
+                    className="w-4 h-4 fill-error-content"
+                  />
+                </>
+              )}
             </button>
           </div>
         </div>

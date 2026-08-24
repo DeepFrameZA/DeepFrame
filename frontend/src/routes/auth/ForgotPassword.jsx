@@ -43,7 +43,11 @@ export default function ForgotPassword() {
           type="submit"
           disabled={loading}
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {loading ? (
+            <span className="loading loading-spinner text-current" />
+          ) : (
+            "Send reset link"
+          )}
         </button>
       </form>
     </div>

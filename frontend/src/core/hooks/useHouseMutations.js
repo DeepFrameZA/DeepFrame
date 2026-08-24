@@ -87,7 +87,7 @@ const useHouseMutations = (house) => {
 
     try {
       await toast.promise(savePromise, {
-        loading: `Saving ${displayName}...`,
+        loading: `Saving...`,
         success: `${capitalize(displayName)} updated!`,
         error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not save changes"),
       });
@@ -155,7 +155,7 @@ const useHouseMutations = (house) => {
     const createPromise = createArea(areaData);
     try {
       const newArea = await toast.promise(createPromise, {
-        loading: "Creating area...",
+        loading: "Creating...",
         success: `Area "${result.value}" created!`,
         error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not create area"),
       });
@@ -175,7 +175,7 @@ const useHouseMutations = (house) => {
     const deletePromise = deleteArea(areaId);
     try {
       await toast.promise(deletePromise, {
-        loading: `Deleting area ${areaName}...`,
+        loading: `Deleting...`,
         success: `Area "${areaName}" deleted!`,
         error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete area"),
       });
@@ -247,9 +247,32 @@ const useHouseMutations = (house) => {
   const setValue = (fieldKey, value) =>
     setFieldValues((prev) => ({ ...prev, [fieldKey]: value }));
 
-  const beginEdit = (fieldKey) => {
-    setEditingField((prev) => ({ ...prev, [fieldKey]: true }));
+  const cancelEdit = (fieldKey) => {
+    const oldValue = originalValueRef.current[fieldKey];
+    if (oldValue !== undefined) {
+      setFieldValues((prev) => ({ ...prev, [fieldKey]: oldValue }));
+    }
+    setEditingField((prev) => ({ ...prev, [fieldKey]: false }));
+  };
+
+  const startEdit = (fieldKey) => {
+    setEditingField((prev) => {
+      const current = prev[fieldKey];
+      if (!current) return { ...prev, [fieldKey]: true };
+      return prev;
+    });
     originalValueRef.current[fieldKey] = fieldValues[fieldKey];
+  };
+
+  const beginEdit = (fieldKey) => {
+    const hasActive = Object.values(editingField).some(Boolean);
+    if (hasActive) {
+      const activeKey = Object.keys(editingField).find((key) => editingField[key]);
+      if (activeKey && activeKey !== fieldKey) {
+        cancelEdit(activeKey);
+      }
+    }
+    startEdit(fieldKey);
   };
 
   const beginEditClear = (fieldKey) => {
@@ -267,6 +290,7 @@ const useHouseMutations = (house) => {
     setValue,
     beginEdit,
     beginEditClear,
+    cancelEdit,
     saveHouseField,
     saveAreaField,
     saveSurfaceField,

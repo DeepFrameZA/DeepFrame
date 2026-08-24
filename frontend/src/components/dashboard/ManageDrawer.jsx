@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import ManagedTextField from "../management/ManagedTextField";
 import ManagedTileField from "../management/ManagedTileField";
 import ManagedTextAreaField from "../management/ManagedTextAreaField";
@@ -81,6 +81,33 @@ const AddSurfaceRow = ({ onSubmit, creating }) => {
 const ManageDrawer = ({ house, onClose }) => {
   const { tilesCatalog, tilesCatalogLoaded, ensureTilesCatalog } = useHouses();
   const mut = useHouseMutations(house);
+  const { editingField, cancelEdit } = mut;
+
+  const drawerContentRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      const activeKey = Object.keys(editingField).find(
+        (key) => editingField[key],
+      );
+      if (!activeKey) return;
+
+      const clickedInsideActiveEditor = e.target.closest(
+        `[data-edit-active="${activeKey}"]`,
+      );
+      const clickedTileDropdown = e.target.closest(
+        "[data-tile-dropdown], .dropdown, .menu",
+      );
+      if (clickedInsideActiveEditor || clickedTileDropdown) return;
+
+      cancelEdit(activeKey);
+    };
+
+    const node = drawerContentRef.current;
+    if (!node) return;
+    node.addEventListener("click", handleClick, true);
+    return () => node.removeEventListener("click", handleClick, true);
+  }, [editingField, cancelEdit]);
 
   if (!house) return null;
 
@@ -102,7 +129,10 @@ const ManageDrawer = ({ house, onClose }) => {
   };
 
   return (
-    <div className="bg-base-100 min-h-full w-120 max-w-[95vw] h-full overflow-y-auto p-6">
+    <div
+      ref={drawerContentRef}
+      className="bg-base-100 min-h-full w-120 max-w-[95vw] h-full overflow-y-auto p-6"
+    >
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">
           {house.unit_number ? `MH ${house.unit_number}` : "Manage House"}
@@ -120,77 +150,89 @@ const ManageDrawer = ({ house, onClose }) => {
         GENERAL INFORMATION
       </div>
 
-      <form className="flex flex-wrap justify-center gap-4">
-        <ManagedTextField
-          label="Unit number"
-          fieldKey={unitNumberFieldKey}
-          value={mut.fieldValues[unitNumberFieldKey]}
-          fallback={house.unit_number}
-          editing={mut.editingField[unitNumberFieldKey]}
-          saving={mut.savingField === unitNumberFieldKey}
-          uniqueId={`save_unit_number_field_${house.unit_number}`}
-          onChange={(v) => mut.setValue(unitNumberFieldKey, v)}
-          onBeginEdit={() => mut.beginEdit(unitNumberFieldKey)}
-          onSave={() =>
-            saveField(unitNumberFieldKey, "unit number", validateUnitNumber)
-          }
-        />
-
-        <ManagedTextField
-          label="Client surname"
-          fieldKey={clientSurnameFieldKey}
-          value={mut.fieldValues[clientSurnameFieldKey]}
-          fallback={house.client_surname}
-          editing={mut.editingField[clientSurnameFieldKey]}
-          saving={mut.savingField === clientSurnameFieldKey}
-          uniqueId={`save_client_surname_field_${house.unit_number}`}
-          onChange={(v) => mut.setValue(clientSurnameFieldKey, v)}
-          onBeginEdit={() => mut.beginEdit(clientSurnameFieldKey)}
-          onSave={() =>
-            saveField(clientSurnameFieldKey, "client surname", validateSurname)
-          }
-        />
-
-        <ManagedTextField
-          label="Client contact number"
-          fieldKey={clientContactNumberFieldKey}
-          value={mut.fieldValues[clientContactNumberFieldKey]}
-          fallback={house.client_contact_number}
-          editing={mut.editingField[clientContactNumberFieldKey]}
-          saving={mut.savingField === clientContactNumberFieldKey}
-          uniqueId={`save_contact_number_field_${house.unit_number}`}
-          onChange={(v) => mut.setValue(clientContactNumberFieldKey, v)}
-          onBeginEdit={() => mut.beginEdit(clientContactNumberFieldKey)}
-          onSave={() =>
-            saveField(clientContactNumberFieldKey, "contact number", (v) =>
-              validatePhone(v),
-            )
-          }
-          type="tel"
-          tel
-          region=""
-        />
-
-        <ManagedTextAreaField
-          label="Notes"
-          fieldKey={notesFieldKey}
-          value={mut.fieldValues[notesFieldKey]}
-          fallback={house.notes}
-          editing={mut.editingField[notesFieldKey]}
-          saving={mut.savingField === notesFieldKey}
-          uniqueId={`save_notes_field_${house.unit_number}`}
-          onChange={(v) => mut.setValue(notesFieldKey, v)}
-          onBeginEdit={() => mut.beginEdit(notesFieldKey)}
-          onSave={() => {
-            const result = validateNotes(mut.fieldValues[notesFieldKey]);
-            if (!result.valid) {
-              toast.error(result.error);
-              return;
+      <div className="flex flex-wrap justify-center gap-4">
+        <div data-edit-active={unitNumberFieldKey}>
+          <ManagedTextField
+            label="Unit number"
+            fieldKey={unitNumberFieldKey}
+            value={mut.fieldValues[unitNumberFieldKey]}
+            fallback={house.unit_number}
+            editing={mut.editingField[unitNumberFieldKey]}
+            saving={mut.savingField === unitNumberFieldKey}
+            uniqueId={`save_unit_number_field_${house.unit_number}`}
+            onChange={(v) => mut.setValue(unitNumberFieldKey, v)}
+            onBeginEdit={() => mut.beginEdit(unitNumberFieldKey)}
+            onSave={() =>
+              saveField(unitNumberFieldKey, "unit number", validateUnitNumber)
             }
-            mut.saveHouseField(notesFieldKey, "notes", result.value);
-          }}
-        />
-      </form>
+          />
+        </div>
+
+        <div data-edit-active={clientSurnameFieldKey}>
+          <ManagedTextField
+            label="Client surname"
+            fieldKey={clientSurnameFieldKey}
+            value={mut.fieldValues[clientSurnameFieldKey]}
+            fallback={house.client_surname}
+            editing={mut.editingField[clientSurnameFieldKey]}
+            saving={mut.savingField === clientSurnameFieldKey}
+            uniqueId={`save_client_surname_field_${house.unit_number}`}
+            onChange={(v) => mut.setValue(clientSurnameFieldKey, v)}
+            onBeginEdit={() => mut.beginEdit(clientSurnameFieldKey)}
+            onSave={() =>
+              saveField(
+                clientSurnameFieldKey,
+                "client surname",
+                validateSurname,
+              )
+            }
+          />
+        </div>
+
+        <div data-edit-active={clientContactNumberFieldKey}>
+          <ManagedTextField
+            label="Client contact number"
+            fieldKey={clientContactNumberFieldKey}
+            value={mut.fieldValues[clientContactNumberFieldKey]}
+            fallback={house.client_contact_number}
+            editing={mut.editingField[clientContactNumberFieldKey]}
+            saving={mut.savingField === clientContactNumberFieldKey}
+            uniqueId={`save_contact_number_field_${house.unit_number}`}
+            onChange={(v) => mut.setValue(clientContactNumberFieldKey, v)}
+            onBeginEdit={() => mut.beginEdit(clientContactNumberFieldKey)}
+            onSave={() =>
+              saveField(clientContactNumberFieldKey, "contact number", (v) =>
+                validatePhone(v),
+              )
+            }
+            type="tel"
+            tel
+            region=""
+          />
+        </div>
+
+        <div data-edit-active={notesFieldKey}>
+          <ManagedTextAreaField
+            label="Notes"
+            fieldKey={notesFieldKey}
+            value={mut.fieldValues[notesFieldKey]}
+            fallback={house.notes}
+            editing={mut.editingField[notesFieldKey]}
+            saving={mut.savingField === notesFieldKey}
+            uniqueId={`save_notes_field_${house.unit_number}`}
+            onChange={(v) => mut.setValue(notesFieldKey, v)}
+            onBeginEdit={() => mut.beginEdit(notesFieldKey)}
+            onSave={() => {
+              const result = validateNotes(mut.fieldValues[notesFieldKey]);
+              if (!result.valid) {
+                toast.error(result.error);
+                return;
+              }
+              mut.saveHouseField(notesFieldKey, "notes", result.value);
+            }}
+          />
+        </div>
+      </div>
 
       <div className="divider text-sm my-6">AREAS AND SURFACES</div>
 
@@ -216,36 +258,38 @@ const ManageDrawer = ({ house, onClose }) => {
                 {area.name}
               </div>
               <div className="collapse-content z-1">
-                <ManagedTextField
-                  label="Area name"
-                  fieldKey={areaNameFieldKey}
-                  value={mut.fieldValues[areaNameFieldKey]}
-                  fallback={area.name}
-                  editing={mut.editingField[areaNameFieldKey]}
-                  saving={mut.savingField === areaNameFieldKey}
-                  uniqueId={`save_unit_${house.unit_number}_area_name_field_${area.id}`}
-                  onChange={(v) => mut.setValue(areaNameFieldKey, v)}
-                  onBeginEdit={() => mut.beginEdit(areaNameFieldKey)}
-                  onSave={() => {
-                    const result = validateName(
-                      mut.fieldValues[areaNameFieldKey],
-                      "area name",
-                    );
-                    if (!result.valid) {
-                      toast.error(result.error);
-                      return;
-                    }
-                    if (result.value !== mut.fieldValues[areaNameFieldKey]) {
-                      mut.setValue(areaNameFieldKey, result.value);
-                    }
-                    mut.saveAreaField(
-                      area.id,
-                      areaNameFieldKey,
-                      "area name",
-                      result.value,
-                    );
-                  }}
-                />
+                <div data-edit-active={areaNameFieldKey}>
+                  <ManagedTextField
+                    label="Area name"
+                    fieldKey={areaNameFieldKey}
+                    value={mut.fieldValues[areaNameFieldKey]}
+                    fallback={area.name}
+                    editing={mut.editingField[areaNameFieldKey]}
+                    saving={mut.savingField === areaNameFieldKey}
+                    uniqueId={`save_unit_${house.unit_number}_area_name_field_${area.id}`}
+                    onChange={(v) => mut.setValue(areaNameFieldKey, v)}
+                    onBeginEdit={() => mut.beginEdit(areaNameFieldKey)}
+                    onSave={() => {
+                      const result = validateName(
+                        mut.fieldValues[areaNameFieldKey],
+                        "area name",
+                      );
+                      if (!result.valid) {
+                        toast.error(result.error);
+                        return;
+                      }
+                      if (result.value !== mut.fieldValues[areaNameFieldKey]) {
+                        mut.setValue(areaNameFieldKey, result.value);
+                      }
+                      mut.saveAreaField(
+                        area.id,
+                        areaNameFieldKey,
+                        "area name",
+                        result.value,
+                      );
+                    }}
+                  />
+                </div>
 
                 <div className="font-semibold text-sm my-6">Surfaces</div>
 
@@ -266,191 +310,204 @@ const ManageDrawer = ({ house, onClose }) => {
                         className="mb-3 rounded-sm border border-base-content/15 p-3"
                         key={surface.id}
                       >
-                        <form className="flex flex-wrap gap-4 grow-0">
-                          <ManagedTextField
-                            label="Surface name"
-                            fieldKey={surfaceNameFieldKey}
-                            value={mut.fieldValues[surfaceNameFieldKey]}
-                            fallback={surface.name}
-                            editing={mut.editingField[surfaceNameFieldKey]}
-                            saving={mut.savingField === surfaceNameFieldKey}
-                            uniqueId={`save_unit_${house.unit_number}_surface_name_field_${surface.id}`}
-                            onChange={(v) =>
-                              mut.setValue(surfaceNameFieldKey, v)
-                            }
-                            onBeginEdit={() =>
-                              mut.beginEdit(surfaceNameFieldKey)
-                            }
-                            onSave={() => {
-                              const result = validateName(
-                                mut.fieldValues[surfaceNameFieldKey],
-                                "surface name",
-                              );
-                              if (!result.valid) {
-                                toast.error(result.error);
-                                return;
+                        <div className="flex flex-wrap gap-4 grow-0">
+                          <div data-edit-active={surfaceNameFieldKey}>
+                            <ManagedTextField
+                              label="Surface name"
+                              fieldKey={surfaceNameFieldKey}
+                              value={mut.fieldValues[surfaceNameFieldKey]}
+                              fallback={surface.name}
+                              editing={mut.editingField[surfaceNameFieldKey]}
+                              saving={mut.savingField === surfaceNameFieldKey}
+                              uniqueId={`save_unit_${house.unit_number}_surface_name_field_${surface.id}`}
+                              onChange={(v) =>
+                                mut.setValue(surfaceNameFieldKey, v)
                               }
-                              if (
-                                result.value !==
-                                mut.fieldValues[surfaceNameFieldKey]
-                              ) {
-                                mut.setValue(surfaceNameFieldKey, result.value);
+                              onBeginEdit={() =>
+                                mut.beginEdit(surfaceNameFieldKey)
                               }
-                              mut.saveSurfaceField(
-                                area.id,
-                                surface.id,
-                                surfaceNameFieldKey,
-                                result.value,
-                                "surface name",
-                              );
-                            }}
-                          />
+                              onSave={() => {
+                                const result = validateName(
+                                  mut.fieldValues[surfaceNameFieldKey],
+                                  "surface name",
+                                );
+                                if (!result.valid) {
+                                  toast.error(result.error);
+                                  return;
+                                }
+                                if (
+                                  result.value !==
+                                  mut.fieldValues[surfaceNameFieldKey]
+                                ) {
+                                  mut.setValue(
+                                    surfaceNameFieldKey,
+                                    result.value,
+                                  );
+                                }
+                                mut.saveSurfaceField(
+                                  area.id,
+                                  surface.id,
+                                  surfaceNameFieldKey,
+                                  result.value,
+                                  "surface name",
+                                );
+                              }}
+                            />
+                          </div>
 
-                          <ManagedTileField
-                            fieldKey={surface.id}
-                            editing={
-                              mut.editingField[surfaceSelectedTileFieldKey]
-                            }
-                            saving={
-                              mut.savingField === surfaceSelectedTileFieldKey
-                            }
-                            uniqueId={`save_unit_${house.unit_number}_selected_tile_field_${surface.id}`}
-                            catalog={tilesCatalog}
-                            loading={!tilesCatalogLoaded}
-                            initialDisplay={
-                              surface.selected_tile?.description ?? ""
-                            }
-                            onSelect={(tile) =>
-                              mut.setValue(surfaceSelectedTileFieldKey, tile)
-                            }
-                            onBeginEdit={() => {
-                              ensureTilesCatalog();
-                              mut.beginEdit(surfaceSelectedTileFieldKey);
-                            }}
-                            onSave={() =>
-                              mut.saveSurfaceField(
-                                area.id,
-                                surface.id,
-                                surfaceSelectedTileFieldKey,
-                                mut.fieldValues[surfaceSelectedTileFieldKey],
-                                "selected tile",
-                                mut.fieldValues[surfaceSelectedTileFieldKey]
-                                  ?.sku,
-                              )
-                            }
-                          />
-
-                          <ManagedTextField
-                            label="Surface length"
-                            fieldKey={surfaceLengthFieldKey}
-                            value={mut.fieldValues[surfaceLengthFieldKey]}
-                            fallback={surface.surface_length}
-                            editing={mut.editingField[surfaceLengthFieldKey]}
-                            saving={mut.savingField === surfaceLengthFieldKey}
-                            uniqueId={`save_unit_${house.unit_number}_surface_length_field_${surface.id}`}
-                            onChange={(v) =>
-                              mut.setValue(surfaceLengthFieldKey, v)
-                            }
-                            onBeginEdit={() =>
-                              mut.beginEdit(surfaceLengthFieldKey)
-                            }
-                            onSave={() => {
-                              const result = validateDimension(
-                                mut.fieldValues[surfaceLengthFieldKey],
-                                "Surface length",
-                              );
-                              if (!result.valid) {
-                                toast.error(result.error);
-                                return;
+                          <div data-edit-active={surfaceSelectedTileFieldKey}>
+                            <ManagedTileField
+                              fieldKey={surface.id}
+                              editing={
+                                mut.editingField[surfaceSelectedTileFieldKey]
                               }
-                              mut.saveSurfaceField(
-                                area.id,
-                                surface.id,
-                                surfaceLengthFieldKey,
-                                result.value,
-                                "Surface length",
-                              );
-                            }}
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="0.01"
-                          />
-
-                          <ManagedTextField
-                            label="Surface width"
-                            fieldKey={surfaceWidthFieldKey}
-                            value={mut.fieldValues[surfaceWidthFieldKey]}
-                            fallback={surface.surface_width}
-                            editing={mut.editingField[surfaceWidthFieldKey]}
-                            saving={mut.savingField === surfaceWidthFieldKey}
-                            uniqueId={`save_unit_${house.unit_number}_surface_width_field_${surface.id}`}
-                            onChange={(v) =>
-                              mut.setValue(surfaceWidthFieldKey, v)
-                            }
-                            onBeginEdit={() =>
-                              mut.beginEdit(surfaceWidthFieldKey)
-                            }
-                            onSave={() => {
-                              const result = validateDimension(
-                                mut.fieldValues[surfaceWidthFieldKey],
-                                "Surface width",
-                              );
-                              if (!result.valid) {
-                                toast.error(result.error);
-                                return;
+                              saving={
+                                mut.savingField === surfaceSelectedTileFieldKey
                               }
-                              mut.saveSurfaceField(
-                                area.id,
-                                surface.id,
-                                surfaceWidthFieldKey,
-                                result.value,
-                                "Surface width",
-                              );
-                            }}
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="0.01"
-                          />
-
-                          <ManagedTextField
-                            label="Surface height"
-                            fieldKey={surfaceHeightFieldKey}
-                            value={mut.fieldValues[surfaceHeightFieldKey]}
-                            fallback={surface.surface_height}
-                            editing={mut.editingField[surfaceHeightFieldKey]}
-                            saving={mut.savingField === surfaceHeightFieldKey}
-                            uniqueId={`save_unit_${house.unit_number}_surface_height_field_${surface.id}`}
-                            onChange={(v) =>
-                              mut.setValue(surfaceHeightFieldKey, v)
-                            }
-                            onBeginEdit={() =>
-                              mut.beginEdit(surfaceHeightFieldKey)
-                            }
-                            onSave={() => {
-                              const result = validateDimension(
-                                mut.fieldValues[surfaceHeightFieldKey],
-                                "Surface height",
-                              );
-                              if (!result.valid) {
-                                toast.error(result.error);
-                                return;
+                              uniqueId={`save_unit_${house.unit_number}_selected_tile_field_${surface.id}`}
+                              catalog={tilesCatalog}
+                              loading={!tilesCatalogLoaded}
+                              initialDisplay={
+                                surface.selected_tile?.description ?? ""
                               }
-                              mut.saveSurfaceField(
-                                area.id,
-                                surface.id,
-                                surfaceHeightFieldKey,
-                                result.value,
-                                "Surface height",
-                              );
-                            }}
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="0.01"
-                          />
-                        </form>
+                              onSelect={(tile) =>
+                                mut.setValue(surfaceSelectedTileFieldKey, tile)
+                              }
+                              onBeginEdit={() => {
+                                ensureTilesCatalog();
+                                mut.beginEdit(surfaceSelectedTileFieldKey);
+                              }}
+                              onSave={() =>
+                                mut.saveSurfaceField(
+                                  area.id,
+                                  surface.id,
+                                  surfaceSelectedTileFieldKey,
+                                  mut.fieldValues[surfaceSelectedTileFieldKey],
+                                  "selected tile",
+                                  mut.fieldValues[surfaceSelectedTileFieldKey]
+                                    ?.sku,
+                                )
+                              }
+                            />
+                          </div>
+
+                          <div data-edit-active={surfaceLengthFieldKey}>
+                            <ManagedTextField
+                              label="Surface length"
+                              fieldKey={surfaceLengthFieldKey}
+                              value={mut.fieldValues[surfaceLengthFieldKey]}
+                              fallback={surface.surface_length}
+                              editing={mut.editingField[surfaceLengthFieldKey]}
+                              saving={mut.savingField === surfaceLengthFieldKey}
+                              uniqueId={`save_unit_${house.unit_number}_surface_length_field_${surface.id}`}
+                              onChange={(v) =>
+                                mut.setValue(surfaceLengthFieldKey, v)
+                              }
+                              onBeginEdit={() =>
+                                mut.beginEdit(surfaceLengthFieldKey)
+                              }
+                              onSave={() => {
+                                const result = validateDimension(
+                                  mut.fieldValues[surfaceLengthFieldKey],
+                                  "Surface length",
+                                );
+                                if (!result.valid) {
+                                  toast.error(result.error);
+                                  return;
+                                }
+                                mut.saveSurfaceField(
+                                  area.id,
+                                  surface.id,
+                                  surfaceLengthFieldKey,
+                                  result.value,
+                                  "Surface length",
+                                );
+                              }}
+                              type="number"
+                              min="0.01"
+                              max="100000"
+                              step="0.01"
+                            />
+                          </div>
+
+                          <div data-edit-active={surfaceWidthFieldKey}>
+                            <ManagedTextField
+                              label="Surface width"
+                              fieldKey={surfaceWidthFieldKey}
+                              value={mut.fieldValues[surfaceWidthFieldKey]}
+                              fallback={surface.surface_width}
+                              editing={mut.editingField[surfaceWidthFieldKey]}
+                              saving={mut.savingField === surfaceWidthFieldKey}
+                              uniqueId={`save_unit_${house.unit_number}_surface_width_field_${surface.id}`}
+                              onChange={(v) =>
+                                mut.setValue(surfaceWidthFieldKey, v)
+                              }
+                              onBeginEdit={() =>
+                                mut.beginEdit(surfaceWidthFieldKey)
+                              }
+                              onSave={() => {
+                                const result = validateDimension(
+                                  mut.fieldValues[surfaceWidthFieldKey],
+                                  "Surface width",
+                                );
+                                if (!result.valid) {
+                                  toast.error(result.error);
+                                  return;
+                                }
+                                mut.saveSurfaceField(
+                                  area.id,
+                                  surface.id,
+                                  surfaceWidthFieldKey,
+                                  result.value,
+                                  "Surface width",
+                                );
+                              }}
+                              type="number"
+                              min="0.01"
+                              max="100000"
+                              step="0.01"
+                            />
+                          </div>
+
+                          <div data-edit-active={surfaceHeightFieldKey}>
+                            <ManagedTextField
+                              label="Surface height"
+                              fieldKey={surfaceHeightFieldKey}
+                              value={mut.fieldValues[surfaceHeightFieldKey]}
+                              fallback={surface.surface_height}
+                              editing={mut.editingField[surfaceHeightFieldKey]}
+                              saving={mut.savingField === surfaceHeightFieldKey}
+                              uniqueId={`save_unit_${house.unit_number}_surface_height_field_${surface.id}`}
+                              onChange={(v) =>
+                                mut.setValue(surfaceHeightFieldKey, v)
+                              }
+                              onBeginEdit={() =>
+                                mut.beginEdit(surfaceHeightFieldKey)
+                              }
+                              onSave={() => {
+                                const result = validateDimension(
+                                  mut.fieldValues[surfaceHeightFieldKey],
+                                  "Surface height",
+                                );
+                                if (!result.valid) {
+                                  toast.error(result.error);
+                                  return;
+                                }
+                                mut.saveSurfaceField(
+                                  area.id,
+                                  surface.id,
+                                  surfaceHeightFieldKey,
+                                  result.value,
+                                  "Surface height",
+                                );
+                              }}
+                              type="number"
+                              min="0.01"
+                              max="100000"
+                              step="0.01"
+                            />
+                          </div>
+                        </div>
 
                         <div className="divider text-sm"></div>
                         <div className="flex justify-end items-center w-full mb-2">

@@ -53,7 +53,11 @@ export default function ResetPassword() {
           type="submit"
           disabled={loading}
         >
-          {loading ? "Updating..." : "Update password"}
+          {loading ? (
+            <span className="loading loading-spinner text-current" />
+          ) : (
+            "Update password"
+          )}
         </button>
       </form>
     </div>

@@ -55,7 +55,11 @@ export default function Login() {
           type="submit"
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? (
+            <span className="loading loading-spinner text-current" />
+          ) : (
+            "Sign in"
+          )}
         </button>
         <div className="flex justify-between text-sm">
           <Link to="/signup" className="link">

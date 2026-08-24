@@ -93,7 +93,11 @@ export default function Signup() {
           type="submit"
           disabled={loading}
         >
-          {loading ? "Submitting..." : "Submit request"}
+          {loading ? (
+            <span className="loading loading-spinner text-current" />
+          ) : (
+            "Submit request"
+          )}
         </button>
         <div>
           <Link to="/login" className="link">
