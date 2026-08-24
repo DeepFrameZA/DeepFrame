@@ -101,7 +101,7 @@ const CreateDrawer = ({ onClose }) => {
         </button>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-4">
+      <form className="flex flex-wrap justify-center gap-4">
         <CreateField
           label="Unit number"
           value={newHouse.unit_number}
@@ -125,11 +125,10 @@ const CreateDrawer = ({ onClose }) => {
           region=""
           icon={<ContactIcon />}
         />
-      </div>
-
+      </form>
       <div className="flex justify-end items-center w-full mt-6 mb-2">
         <button
-          className="btn btn-primary focus-within:outline-0 flex gap-y-4"
+          className="btn btn-primary btn-outline focus-within:outline-0 flex gap-y-4"
           disabled={creatingHouse}
           onClick={(e) => {
             e.preventDefault();

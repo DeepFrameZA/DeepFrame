@@ -120,7 +120,7 @@ const ManageDrawer = ({ house, onClose }) => {
         GENERAL INFORMATION
       </div>
 
-      <div className="flex flex-wrap justify-center gap-4">
+      <form className="flex flex-wrap justify-center gap-4">
         <ManagedTextField
           label="Unit number"
           fieldKey={unitNumberFieldKey}
@@ -190,7 +190,7 @@ const ManageDrawer = ({ house, onClose }) => {
             mut.saveHouseField(notesFieldKey, "notes", result.value);
           }}
         />
-      </div>
+      </form>
 
       <div className="divider text-sm my-6">AREAS AND SURFACES</div>
 
@@ -266,7 +266,7 @@ const ManageDrawer = ({ house, onClose }) => {
                         className="mb-3 rounded-sm border border-base-content/15 p-3"
                         key={surface.id}
                       >
-                        <div className="flex flex-wrap gap-4 grow-0">
+                        <form className="flex flex-wrap gap-4 grow-0">
                           <ManagedTextField
                             label="Surface name"
                             fieldKey={surfaceNameFieldKey}
@@ -450,7 +450,7 @@ const ManageDrawer = ({ house, onClose }) => {
                             max="100000"
                             step="0.01"
                           />
-                        </div>
+                        </form>
 
                         <div className="divider text-sm"></div>
                         <div className="flex justify-end items-center w-full mb-2">
