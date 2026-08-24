@@ -20,7 +20,7 @@ const ManagedTextAreaField = ({
           className=" resize-none h-10 w-48"
           required
           disabled={!editing}
-          value={value ?? fallback | ""}
+          value={value ?? fallback ?? ""}
           onChange={(e) => onChange(e.target.value)}
         />
       </FloatingInput>

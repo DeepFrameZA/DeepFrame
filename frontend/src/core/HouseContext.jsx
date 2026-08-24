@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 import {
   getAllHouses,
   getHouse,
@@ -9,19 +10,12 @@ import {
 const HouseContext = createContext(null);
 
 export function HouseProvider({ children }) {
+  const { user } = useAuth();
   const [houses, setHouses] = useState([]);
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tilesCatalog, setTilesCatalog] = useState([]);
   const [tilesCatalogLoaded, setTilesCatalogLoaded] = useState(false);
-
-  useEffect(() => {
-    getAllHouses()
-      .then(setHouses)
-      .finally(() => setLoading(false));
-    ensureTilesCatalog();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function ensureTilesCatalog() {
     if (tilesCatalogLoaded || tilesCatalog.length) return;
@@ -29,6 +23,39 @@ export function HouseProvider({ children }) {
     setTilesCatalog(data);
     setTilesCatalogLoaded(true);
   }
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (!user) {
+      setHouses([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getAllHouses();
+        if (!cancelled) setHouses(data);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    ensureTilesCatalog();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function selectHouse(id) {
     if (selectedHouse?.id === id) return;
@@ -49,7 +76,9 @@ export function HouseProvider({ children }) {
 
   function updateHouseLocal(id, updates) {
     setHouses((prevHouses) =>
-      prevHouses.map((house) => (house.id === id ? { ...house, ...updates } : house))
+      prevHouses.map((house) =>
+        house.id === id ? { ...house, ...updates } : house,
+      ),
     );
   }
 
@@ -60,11 +89,11 @@ export function HouseProvider({ children }) {
           ? {
               ...house,
               allAreas: house.allAreas.map((area) =>
-                area.id === areaId ? { ...area, ...updates } : area
+                area.id === areaId ? { ...area, ...updates } : area,
               ),
             }
-          : house
-      )
+          : house,
+      ),
     );
   }
 
@@ -72,9 +101,12 @@ export function HouseProvider({ children }) {
     setHouses((prevHouses) =>
       prevHouses.map((house) =>
         house.id === houseId
-          ? { ...house, allAreas: [{ ...newArea, allSurfaces: [] }, ...house.allAreas] }
-          : house
-      )
+          ? {
+              ...house,
+              allAreas: [{ ...newArea, allSurfaces: [] }, ...house.allAreas],
+            }
+          : house,
+      ),
     );
   }
 
@@ -90,8 +122,8 @@ export function HouseProvider({ children }) {
               ...house,
               allAreas: house.allAreas.filter((area) => area.id !== areaId),
             }
-          : house
-      )
+          : house,
+      ),
     );
   }
 
@@ -104,11 +136,11 @@ export function HouseProvider({ children }) {
               allAreas: house.allAreas.map((area) =>
                 area.id === areaId
                   ? { ...area, allSurfaces: [newSurface, ...area.allSurfaces] }
-                  : area
+                  : area,
               ),
             }
-          : house
-      )
+          : house,
+      ),
     );
   }
 
@@ -123,14 +155,16 @@ export function HouseProvider({ children }) {
                   ? {
                       ...area,
                       allSurfaces: area.allSurfaces.map((surface) =>
-                        surface.id === surfaceId ? { ...surface, ...updates } : surface
+                        surface.id === surfaceId
+                          ? { ...surface, ...updates }
+                          : surface,
                       ),
                     }
-                  : area
+                  : area,
               ),
             }
-          : house
-      )
+          : house,
+      ),
     );
   }
 
@@ -144,13 +178,15 @@ export function HouseProvider({ children }) {
                 area.id === areaId
                   ? {
                       ...area,
-                      allSurfaces: area.allSurfaces.filter((s) => s.id !== surfaceId),
+                      allSurfaces: area.allSurfaces.filter(
+                        (s) => s.id !== surfaceId,
+                      ),
                     }
-                  : area
+                  : area,
               ),
             }
-          : house
-      )
+          : house,
+      ),
     );
   }
 

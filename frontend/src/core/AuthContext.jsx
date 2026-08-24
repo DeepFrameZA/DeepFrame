@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       await loadProfile(session?.user?.id);
+      setLoading(false);
     });
 
     return () => {

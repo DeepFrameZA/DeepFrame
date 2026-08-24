@@ -36,7 +36,7 @@ const ManagedTextField = ({
           className=""
           required
           disabled={!editing}
-          value={value ?? fallback}
+          value={value ?? fallback ?? ""}
           onChange={handleChange}
           pattern={tel ? undefined : pattern}
           minLength={minLength}

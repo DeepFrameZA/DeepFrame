@@ -22,11 +22,11 @@ createRoot(document.getElementById("root")).render(
                 color: "var(--color-base-content)",
                 minWidth: "250px",
               },
-              error: { duration: 5000 },
+              error: { duration: 3000 },
             }}
           />
         </HouseProvider>
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

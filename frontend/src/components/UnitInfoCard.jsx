@@ -14,9 +14,6 @@ const UnitInfoCard = ({
   notes = "",
   uniqueId = "",
   onEdit,
-  // areas = [],
-  // surfaces = [],
-  // selected_tiles = [],
 }) => {
   const { deleteHouseLocal } = useHouses();
   const submitDeleteHouse = async (id, unitNumber) => {
@@ -26,7 +23,9 @@ const UnitInfoCard = ({
       await toast.promise(deletePromise, {
         loading: `Deleting house ${unitNumber}...`,
         success: `House MH ${unit_number} deleted!`,
-        error: (err) => getDevErrorMessage(err) ?? getErrorMessage(err, "Could not delete house"),
+        error: (err) =>
+          getDevErrorMessage(err) ??
+          getErrorMessage(err, "Could not delete house"),
       });
       deleteHouseLocal(id);
     } catch (error) {
@@ -43,15 +42,15 @@ const UnitInfoCard = ({
             <h2 className="text-2xl font-bold text-center text-base-content">
               {unit_number ? `MH ${unit_number}` : "Unit Number"}
             </h2>
-              <DeleteButton
-                buttonClass="btn-sm btn-ghost"
-                iconClass="fill-error w-5 h-5"
-                itemType="house"
-                itemName={`MH ${unit_number}`}
-                warning="This will also permanently delete all of its areas and surfaces."
-                uniqueId={uniqueId}
-                onConfirm={() => submitDeleteHouse(uniqueId, unit_number)}
-              />
+            <DeleteButton
+              buttonClass="btn-sm btn-ghost"
+              iconClass="fill-error w-5 h-5"
+              itemType="house"
+              itemName={`MH ${unit_number}`}
+              warning="This will also permanently delete all of its areas and surfaces."
+              uniqueId={uniqueId}
+              onConfirm={() => submitDeleteHouse(uniqueId, unit_number)}
+            />
           </div>
           <div className="grid grid-cols-2">
             <div className="">
