@@ -1,51 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../lib/supabaseClient";
+import { createSignupTicketRequest } from "../../lib/invitation";
+import RequiredBadge from "../../components/RequiredBadge";
 
+const pendingEmailKey = "deepframe.registration.email";
 const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-
 const invitationAlphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
 
-const roleDestinations = {
-  admin: "/admin",
-  contractor: "/contractor",
-  resident: "/resident",
-};
-
-const authCallbackErrorParameters = [
-  "error",
-  "error_code",
-  "error_description",
-];
-
-function hasAuthCallbackError() {
-  const searchParameters = new URLSearchParams(window.location.search);
-  const hashParameters = new URLSearchParams(
-    window.location.hash.replace(/^#/, ""),
-  );
-
-  return searchParameters.has("error") || hashParameters.has("error");
+function readPendingEmail() {
+  try {
+    return sessionStorage.getItem(pendingEmailKey) ?? "";
+  } catch {
+    return "";
+  }
 }
 
-function clearAuthCallbackErrorParameters() {
-  const url = new URL(window.location.href);
-  const hashParameters = new URLSearchParams(url.hash.replace(/^#/, ""));
-
-  authCallbackErrorParameters.forEach((parameter) => {
-    url.searchParams.delete(parameter);
-  });
-
-  if (hashParameters.has("error")) {
-    url.hash = "";
+function storePendingEmail(email) {
+  try {
+    if (email) {
+      sessionStorage.setItem(pendingEmailKey, email);
+    } else {
+      sessionStorage.removeItem(pendingEmailKey);
+    }
+  } catch {
+    // Registration still works when browser storage is unavailable.
   }
-
-  window.history.replaceState(
-    window.history.state,
-    "",
-    `${url.pathname}${url.search}${url.hash}`,
-  );
 }
 
 function normalizeInvitationCode(value) {
@@ -59,10 +41,11 @@ function normalizeInvitationCode(value) {
 }
 
 function formatInvitationCode(value) {
-  const normalizedCode = normalizeInvitationCode(value);
-  const groups = normalizedCode.match(/.{1,4}/g);
-
-  return groups?.join("-") ?? "";
+  return (
+    normalizeInvitationCode(value)
+      .match(/.{1,4}/g)
+      ?.join("-") ?? ""
+  );
 }
 
 function RegistrationSteps({ currentStep }) {
@@ -71,59 +54,248 @@ function RegistrationSteps({ currentStep }) {
       className="steps steps-horizontal w-full"
       aria-label="Registration progress"
     >
-      <li className={`step ${currentStep >= 1 ? "step-primary" : ""}`}>
-        Account
-      </li>
-
-      <li className={`step ${currentStep >= 2 ? "step-primary" : ""}`}>
-        Confirm
-      </li>
-
-      <li className={`step ${currentStep >= 3 ? "step-primary" : ""}`}>
-        Invite
-      </li>
+      {["Invitation", "Verify email", "Password"].map((label, index) => (
+        <li
+          key={label}
+          className={`step ${currentStep >= index + 1 ? "step-primary" : ""}`}
+          aria-current={currentStep === index + 1 ? "step" : undefined}
+        >
+          {label}
+        </li>
+      ))}
     </ul>
   );
 }
 
 function Register() {
   const navigate = useNavigate();
+  const {
+    session,
+    profile,
+    loading,
+    error: authError,
+    refreshProfile,
+    setRegistrationPending,
+  } = useAuth();
 
-  const { session, refreshProfile } = useAuth();
-
-  const [authCallbackError, setAuthCallbackError] = useState(
-    hasAuthCallbackError(),
-  );
-  const [email, setEmail] = useState("");
+  const [pendingEmail, setPendingEmail] = useState(readPendingEmail);
+  const [email, setEmail] = useState(readPendingEmail);
+  const [invitationCode, setInvitationCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [confirmationEmail, setConfirmationEmail] = useState("");
-  const [invitationCode, setInvitationCode] = useState("");
-  const [creatingAccount, setCreatingAccount] = useState(false);
-  const [redeemingInvitation, setRedeemingInvitation] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
+  const [action, setAction] = useState(null);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
 
+  const actionRef = useRef(false);
+
+  /*
+   * Keep this screen mounted throughout registration, including
+   * Auth events between verification, password setup, and sign-out.
+   *
+   * RegistrationRoute still redirects recovery sessions.
+   * Backend rules remain responsible for authorization.
+   */
   useEffect(() => {
-    if (authCallbackError) {
-      clearAuthCallbackErrorParameters();
+    setRegistrationPending(true);
+
+    return () => {
+      setRegistrationPending(false);
+    };
+  }, [setRegistrationPending]);
+
+  const busy = action !== null;
+  const disabled = busy || loading || Boolean(authError);
+  const completed = registrationComplete || Boolean(profile);
+  const currentStep = session ? 3 : pendingEmail ? 2 : 1;
+
+  function beginAction(name) {
+    if (actionRef.current) {
+      return false;
     }
-  }, [authCallbackError]);
 
-  const currentStep = session ? 3 : confirmationEmail ? 2 : 1;
+    actionRef.current = true;
+    setAction(name);
+    return true;
+  }
 
-  const handleCreateAccount = async (event) => {
+  function endAction() {
+    actionRef.current = false;
+    setAction(null);
+  }
+
+  function clearPendingEmail() {
+    storePendingEmail("");
+    setPendingEmail("");
+  }
+
+  /*
+   * Synchronize the provider after sign-out so the login route
+   * does not see the old authenticated session.
+   */
+  async function signOutToLogin(message) {
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+
+    if (error) {
+      throw error;
+    }
+
+    clearPendingEmail();
+    setInvitationCode("");
+    setVerificationCode("");
+    setPassword("");
+    setPasswordConfirmation("");
+
+    await refreshProfile();
+
+    if (message) {
+      toast.success(message);
+    }
+
+    navigate("/login", { replace: true });
+  }
+
+  async function handleStart(event) {
     event.preventDefault();
 
     const normalizedEmail = email.trim().toLowerCase();
+    const normalizedCode = normalizeInvitationCode(invitationCode);
 
-    if (!normalizedEmail) {
-      toast.error("Enter your email address.");
+    if (!normalizedEmail || normalizedCode.length !== 12) {
+      toast.error("Enter your invited email and complete invitation code.");
       return;
     }
 
+    if (!beginAction("request")) {
+      return;
+    }
+
+    try {
+      /*
+       * Every new signup attempt obtains a fresh ticket.
+       * Auth failure can still leave the previous ticket consumed.
+       */
+      const ticket = await createSignupTicketRequest({
+        email: normalizedEmail,
+        code: normalizedCode,
+      });
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        options: {
+          shouldCreateUser: true,
+          data: {
+            signup_ticket: ticket.signup_ticket,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      storePendingEmail(normalizedEmail);
+      setPendingEmail(normalizedEmail);
+      setEmail(normalizedEmail);
+      setInvitationCode("");
+      setVerificationCode("");
+
+      toast.success("Check your email for the verification code.");
+    } catch {
+      toast.error(
+        "Unable to start registration. Check your invited email and invitation code. If you have tried several times, wait five minutes before trying again.",
+        { duration: 7000 },
+      );
+    } finally {
+      endAction();
+    }
+  }
+
+  async function handleResend() {
+    if (!pendingEmail || !beginAction("resend")) {
+      return;
+    }
+
+    try {
+      /*
+       * The initial request already created the preliminary account.
+       * Resending must not create another account or signup ticket.
+       */
+      const { error } = await supabase.auth.signInWithOtp({
+        email: pendingEmail,
+        options: {
+          shouldCreateUser: false,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setVerificationCode("");
+      toast.success(
+        "A verification code has been requested. Check your email.",
+      );
+    } catch {
+      toast.error(
+        "Unable to resend the code. Please wait a moment and try again.",
+      );
+    } finally {
+      endAction();
+    }
+  }
+
+  async function handleVerify(event) {
+    event.preventDefault();
+
+    const token = verificationCode.trim();
+
+    if (!/^\d{6}$/.test(token)) {
+      toast.error("Enter the six-digit verification code.");
+      return;
+    }
+
+    if (!beginAction("verify")) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token,
+        type: "email",
+      });
+
+      if (error || !data.session) {
+        throw error ?? new Error("No verification session returned");
+      }
+
+      setVerificationCode("");
+      await refreshProfile();
+      clearPendingEmail();
+
+      toast.success("Email verified.");
+    } catch {
+      toast.error(
+        "Unable to verify your email. Use the newest code or request another one.",
+      );
+    } finally {
+      endAction();
+    }
+  }
+
+  function handleChangeEmail() {
+    clearPendingEmail();
+    setVerificationCode("");
+    setInvitationCode("");
+  }
+
+  async function handleComplete(event) {
+    event.preventDefault();
+
     if (!passwordPattern.test(password)) {
       toast.error(
-        "Your password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.",
+        "Use at least 8 characters, including an uppercase letter, a lowercase letter, and a number.",
       );
       return;
     }
@@ -133,127 +305,129 @@ function Register() {
       return;
     }
 
-    setCreatingAccount(true);
-
-    const { data, error } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/register`,
-      },
-    });
-
-    setCreatingAccount(false);
-
-    if (error) {
-      toast.error(
-        error.message || "Unable to create your account. Please try again.",
-      );
+    if (!beginAction("complete")) {
       return;
     }
 
-    /*
-     * Supabase returns no session while email confirmation
-     * is required. The confirmation link returns the user
-     * to /register and establishes the authenticated session.
-     */
-    if (!data.session) {
-      setConfirmationEmail(normalizedEmail);
+    let completionSucceeded = false;
+    let phase = "password";
+
+    try {
+      /*
+       * Confirm the current server-side account identity before
+       * changing its password. This also detects a session changed
+       * by another tab since this form was rendered.
+       */
+      const { data: account, error: accountError } =
+        await supabase.auth.getUser();
+
+      if (
+        accountError ||
+        !account.user ||
+        account.user.id !== session?.user.id ||
+        !account.user.email_confirmed_at ||
+        !account.user.email
+      ) {
+        throw accountError ?? new Error("Registration session changed");
+      }
+
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password,
+      });
+
+      /*
+       * A retry may follow an earlier successful password update.
+       * Password sign-in below still has to prove this password works.
+       */
+      if (passwordError && passwordError.code !== "same_password") {
+        throw passwordError;
+      }
+
+      phase = "authentication";
+
+      const { data: signedIn, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: account.user.email,
+          password,
+        });
+
+      if (
+        signInError ||
+        !signedIn.session ||
+        signedIn.user?.id !== account.user.id
+      ) {
+        throw signInError ?? new Error("Password authentication failed");
+      }
+
+      phase = "completion";
+
+      const { data: role, error: completionError } = await supabase.rpc(
+        "complete_registration",
+      );
+
+      if (completionError) {
+        throw completionError;
+      }
+
+      if (!["resident", "contractor"].includes(role)) {
+        throw new Error("Unexpected registration role");
+      }
+
+      completionSucceeded = true;
+      setRegistrationComplete(true);
       setPassword("");
       setPasswordConfirmation("");
 
-      toast.success("Check your email to continue.");
-      return;
-    }
-
-    /*
-     * If confirmations are disabled in another environment,
-     * signUp may return a session immediately. AuthProvider
-     * will then advance this page to the invitation step.
-     */
-    toast.success("Account created.");
-    setAuthCallbackError(false);
-  };
-
-  const handleInvitationCodeChange = (event) => {
-    setInvitationCode(formatInvitationCode(event.target.value));
-  };
-
-  const handleRedeemInvitation = async (event) => {
-    event.preventDefault();
-
-    const normalizedCode = normalizeInvitationCode(invitationCode);
-
-    if (normalizedCode.length !== 12) {
-      toast.error("Enter the complete 12-character invitation code.");
-      return;
-    }
-
-    setRedeemingInvitation(true);
-
-    const { data: role, error } = await supabase.rpc("redeem_invitation", {
-      p_code: normalizedCode,
-    });
-
-    if (error) {
-      setRedeemingInvitation(false);
+      phase = "signout";
 
       /*
-       * This response concerns the authenticated user's own
-       * profile, so it may be handled separately from the
-       * generic invitation response.
+       * Let the completed screen remain visible for three seconds
+       * before signing out and navigating to login.
        */
-      if (error.message === "Profile already exists") {
-        await refreshProfile();
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 3000);
+      });
 
-        toast("Registration has already been completed.");
-        navigate("/", { replace: true });
-        return;
+      await signOutToLogin("Registration complete. You can now log in.");
+    } catch {
+      if (completionSucceeded) {
+        toast.error(
+          "Registration is complete, but sign-out could not be finished. Select Login to try again.",
+          { duration: 7000 },
+        );
+      } else if (phase === "completion") {
+        toast.error(
+          "Unable to complete registration. You can retry. If your invitation is no longer available, contact the administrator.",
+          { duration: 7000 },
+        );
+      } else {
+        toast.error(
+          "Unable to finish password setup. Please try again. If your session has expired, sign out and restart registration.",
+          { duration: 7000 },
+        );
       }
+    } finally {
+      endAction();
+    }
+  }
 
-      toast.error(
-        "This invitation code is incorrect or no longer available. Check the code and make sure you registered with the invited email address. If the problem continues, contact the administrator.",
-        {
-          duration: 7000,
-        },
+  async function handleSignOut() {
+    if (!beginAction("signout")) {
+      return;
+    }
+
+    try {
+      await signOutToLogin(
+        registrationComplete
+          ? "Registration complete. You can now log in."
+          : undefined,
       );
-
-      return;
+    } catch {
+      toast.error("Unable to finish signing out. Please try again.");
+    } finally {
+      endAction();
     }
-
-    await refreshProfile();
-
-    const destination = roleDestinations[role];
-
-    if (!destination) {
-      setRedeemingInvitation(false);
-
-      toast.error(
-        "Your account role could not be recognized. Contact the administrator.",
-      );
-      return;
-    }
-
-    toast.success("Registration complete.");
-    navigate(destination, { replace: true });
-  };
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-
-    const { error } = await supabase.auth.signOut({
-      scope: "local",
-    });
-
-    setSigningOut(false);
-
-    if (error) {
-      toast.error("Unable to sign out. Please try again.");
-      return;
-    }
-
-    navigate("/login", { replace: true });
-  };
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
@@ -261,190 +435,281 @@ function Register() {
         <div className="card-body gap-6">
           <div>
             <h1 className="card-title">Register</h1>
-
             <p className="mt-2">
               Registration is available to invited residents and contractors.
             </p>
           </div>
 
-          {authCallbackError && (
+          {authError && (
             <div className="alert alert-error" role="alert">
-              <div>
-                <h2 className="font-bold">Confirmation link unavailable</h2>
-
-                <p className="text-xs">
-                  This email confirmation link is invalid or has expired.
-                  Complete the account step again to request a new confirmation
-                  email.
-                </p>
-              </div>
+              Unable to load your account. Refresh the page or sign out and try
+              again.
             </div>
           )}
 
-          <RegistrationSteps currentStep={currentStep} />
-
-          {currentStep === 1 && (
-            <form className="space-y-6" onSubmit={handleCreateAccount}>
-              <div>
-                <label className="floating-label input validator w-full">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Email"
-                    autoComplete="email"
-                    required
-                    disabled={creatingAccount}
-                  />
-
-                  <span>Email</span>
-                </label>
-              </div>
-
-              <div>
-                <label className="floating-label input validator w-full">
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Password"
-                    autoComplete="new-password"
-                    minLength="8"
-                    pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                    title="Use at least 8 characters, including an uppercase letter, a lowercase letter, and a number."
-                    required
-                    disabled={creatingAccount}
-                  />
-
-                  <span>Password</span>
-                </label>
-
-                <p className="mt-2">
-                  Use at least 8 characters, including an uppercase letter, a
-                  lowercase letter, and a number.
-                </p>
-              </div>
-
-              <div>
-                <label className="floating-label input validator w-full">
-                  <input
-                    type="password"
-                    value={passwordConfirmation}
-                    onChange={(event) =>
-                      setPasswordConfirmation(event.target.value)
-                    }
-                    placeholder="Confirm password"
-                    autoComplete="new-password"
-                    minLength="8"
-                    required
-                    disabled={creatingAccount}
-                  />
-
-                  <span>Confirm password</span>
-                </label>
-              </div>
-
-              <div className="card-actions justify-between">
-                <Link className="btn btn-ghost" to="/login">
-                  Cancel
-                </Link>
-
-                <button
-                  className="btn"
-                  type="submit"
-                  disabled={creatingAccount}
-                >
-                  {creatingAccount && (
-                    <span className="loading loading-bars loading-xs" />
-                  )}
-                  Create account
-                </button>
-              </div>
-            </form>
-          )}
-
-          {currentStep === 2 && (
+          {completed ? (
             <section className="space-y-6">
-              <div className="alert alert-info" role="status">
-                <div>
-                  <h2 className="font-bold">Confirm your email</h2>
-
-                  <p className="text-xs">
-                    We sent a confirmation link to{" "}
-                    <strong>{confirmationEmail}</strong>. Open the link to
-                    continue registration.
-                  </p>
-                </div>
+              <div className="alert alert-success" role="status">
+                {registrationComplete && busy
+                  ? "Registration complete. Taking you to login…"
+                  : "Your account is registered. Select Login to continue."}
               </div>
-
-              <p className="text-xs">
-                After confirmation, you will redirected to enter your invitation
-                code. You may close this tab.
-              </p>
 
               <div className="card-actions justify-end">
-                <Link className="btn btn-ghost" to="/login">
-                  Back to login
-                </Link>
-              </div>
-            </section>
-          )}
-
-          {currentStep === 3 && (
-            <form className="space-y-6" onSubmit={handleRedeemInvitation}>
-              <div>
-                <h2 className="font-bold">Enter your invitation code</h2>
-
-                <p className="mt-2 text-xs">
-                  Use the code supplied by the administrator.
-                </p>
-              </div>
-
-              <div>
-                <label className="floating-label input validator w-full">
-                  <input
-                    type="text"
-                    value={invitationCode}
-                    onChange={handleInvitationCodeChange}
-                    placeholder="XXXX-XXXX-XXXX"
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck="false"
-                    maxLength="14"
-                    required
-                    disabled={redeemingInvitation}
-                  />
-
-                  <span>Invitation code</span>
-                </label>
-              </div>
-
-              <div className="card-actions justify-between">
                 <button
-                  className="btn"
+                  className="btn w-23"
                   type="button"
                   onClick={handleSignOut}
-                  disabled={signingOut || redeemingInvitation}
+                  disabled={busy}
+                  aria-label="Login"
+                  aria-busy={busy}
                 >
-                  {signingOut ? (
+                  {busy ? (
                     <span className="loading loading-bars loading-xs" />
                   ) : (
-                    "Sign out"
+                    "Login"
                   )}
-                </button>
-
-                <button
-                  className="btn"
-                  type="submit"
-                  disabled={redeemingInvitation}
-                >
-                  {redeemingInvitation && (
-                    <span className="loading loading-bars loading-xs" />
-                  )}
-                  Redeem invitation
                 </button>
               </div>
-            </form>
+            </section>
+          ) : (
+            <>
+              <RegistrationSteps currentStep={currentStep} />
+
+              {currentStep === 1 && (
+                <form className="space-y-6" onSubmit={handleStart}>
+                  <fieldset>
+                    <h3 className="label pb-2">Your email address:</h3>
+                    <label className="floating-label input validator w-full">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="Email"
+                        autoComplete="email"
+                        required
+                        disabled={disabled}
+                      />
+                      <span>Email</span>
+                      <RequiredBadge />
+                    </label>
+                  </fieldset>
+
+                  <fieldset>
+                    <h3 className="label pb-2">Your invitation code:</h3>
+                    <label className="floating-label input validator w-full">
+                      <input
+                        type="text"
+                        value={invitationCode}
+                        onChange={(event) =>
+                          setInvitationCode(
+                            formatInvitationCode(event.target.value),
+                          )
+                        }
+                        placeholder="XXXX-XXXX-XXXX"
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                        maxLength={14}
+                        required
+                        disabled={disabled}
+                      />
+                      <span>Invitation code</span>
+                      <RequiredBadge />
+                    </label>
+                  </fieldset>
+
+                  <div className="card-actions justify-between">
+                    {busy ? (
+                      <button className="btn w-23 btn-ghost" disabled>
+                        Cancel
+                      </button>
+                    ) : (
+                      <Link className="btn w-23 btn-ghost" to="/login">
+                        Cancel
+                      </Link>
+                    )}
+
+                    <button
+                      className="btn w-23"
+                      type="submit"
+                      disabled={disabled}
+                      aria-label="Continue"
+                      aria-busy={action === "request"}
+                    >
+                      {busy ? (
+                        <span className="loading loading-bars loading-xs" />
+                      ) : (
+                        "Continue"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {currentStep === 2 && (
+                <form className="space-y-6" onSubmit={handleVerify}>
+                  <div className="alert alert-info" role="status">
+                    <p>
+                      Enter the six-digit code sent to{" "}
+                      <strong>{pendingEmail}</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <label className="otp validator">
+                      <span aria-hidden="true" />
+                      <span aria-hidden="true" />
+                      <span aria-hidden="true" />
+                      <span aria-hidden="true" />
+                      <span aria-hidden="true" />
+                      <span aria-hidden="true" />
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        aria-label="Six-digit verification code"
+                        value={verificationCode}
+                        onChange={(event) =>
+                          setVerificationCode(
+                            event.target.value.replace(/\D/g, "").slice(0, 6),
+                          )
+                        }
+                        pattern="[0-9]{6}"
+                        minLength={6}
+                        maxLength={6}
+                        required
+                        disabled={disabled}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="divider" />
+
+                  <div className="flex flex-col gap-1">
+                    <div className="w-full">
+                      <span className="mr-2">Didn't get a code?</span>
+                      <button
+                        className="link"
+                        type="button"
+                        onClick={handleResend}
+                        disabled={disabled}
+                        aria-label="Resend code"
+                        aria-busy={action === "resend"}
+                      >
+                        {action === "resend" ? (
+                          <span className="loading loading-bars loading-xs" />
+                        ) : (
+                          "Resend code"
+                        )}
+                      </button>
+                    </div>
+                    <div className="w-full">
+                      <span className="mr-2">Not the correct email?</span>
+
+                      <button
+                        className="link"
+                        type="button"
+                        onClick={handleChangeEmail}
+                        disabled={disabled}
+                      >
+                        Change email
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="card-actions justify-end">
+                    <button
+                      className="btn w-23"
+                      type="submit"
+                      disabled={disabled}
+                      aria-label="Verify email"
+                      aria-busy={action === "verify"}
+                    >
+                      {action === "verify" ? (
+                        <span className="loading loading-bars loading-xs" />
+                      ) : (
+                        "Verify"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {currentStep === 3 && (
+                <form className="space-y-6" onSubmit={handleComplete}>
+                  <p>
+                    Set a password for <strong>{session.user.email}</strong>.
+                  </p>
+
+                  <div>
+                    <label className="floating-label input validator w-full">
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Password"
+                        autoComplete="new-password"
+                        minLength={8}
+                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                        required
+                        disabled={disabled}
+                      />
+                      <span>Password</span>
+                      <RequiredBadge />
+                    </label>
+
+                    <p className="mt-2 text-xs">
+                      Use at least 8 characters, including an uppercase letter,
+                      a lowercase letter, and a number.
+                    </p>
+                  </div>
+
+                  <label className="floating-label input validator w-full">
+                    <input
+                      type="password"
+                      value={passwordConfirmation}
+                      onChange={(event) =>
+                        setPasswordConfirmation(event.target.value)
+                      }
+                      placeholder="Confirm password"
+                      autoComplete="new-password"
+                      minLength={8}
+                      required
+                      disabled={disabled}
+                    />
+                    <span>Confirm password</span>
+                    <RequiredBadge />
+                  </label>
+
+                  <div className="card-actions justify-between">
+                    <button
+                      className="btn btn-ghost w-23"
+                      type="button"
+                      onClick={handleSignOut}
+                      disabled={busy}
+                    >
+                      Sign out
+                    </button>
+
+                    <button
+                      className="btn w-23"
+                      type="submit"
+                      disabled={disabled}
+                      aria-label="Create account"
+                      aria-busy={action === "complete"}
+                    >
+                      {action === "complete" ? (
+                        <span className="loading loading-bars loading-xs" />
+                      ) : (
+                        "Create"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
         </div>
       </div>

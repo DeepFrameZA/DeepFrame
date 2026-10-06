@@ -34,7 +34,7 @@ const RevokeInvitationModal = ({
           <span className="text-end capitalize">{invitation.role}</span>
         </div>
 
-        <div className="divider my-0 mt-1"></div>
+        <div className="divider my-0 mt-1" />
         {/* Explanation */}
         <div className="mt-1">
           <p className="text-sm leading-relaxed opacity-80">

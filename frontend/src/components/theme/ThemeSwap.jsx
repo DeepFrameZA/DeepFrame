@@ -6,6 +6,7 @@ function ThemeToggle() {
   return (
     <label className="swap swap-rotate">
       <input
+        id="theme-swap-checkbox"
         type="checkbox"
         className="theme-controller focus-within:outline-0 focus-within:border-0 focus-within:shadow-none"
         onChange={toggleTheme}

@@ -266,6 +266,14 @@ otp_expiry = 900
 # subject = "Your password has been changed"
 # content_path = "./supabase/templates/password_changed_notification.html"
 
+[auth.email.template.confirmation]
+subject = "Your DeepFrame verification code"
+content_path = "./supabase/templates/verification-code.html"
+
+[auth.email.template.magic_link]
+subject = "Your DeepFrame verification code"
+content_path = "./supabase/templates/verification-code.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false

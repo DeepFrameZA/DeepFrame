@@ -8,16 +8,20 @@ import ContractorView from "./layout/contractor/ContractorView";
 import ResidentView from "./layout/resident/ResidentView";
 import { useAuth } from "./hooks/useAuth";
 
+import Overview from "./layout/admin/pages/Overview";
 import Administration from "./layout/admin/pages/Administration";
 import Invitations from "./components/admin/administration/invitations/Invitations";
 import Users from "./components/admin/administration/users/Users";
 import Access from "./components/admin/administration/access/Access";
 import Catalogue from "./layout/admin/pages/Catalogue";
 import Management from "./layout/admin/pages/Management";
-import Overview from "./layout/admin/pages/Overview";
+import PropertyRoutePanel from "./components/admin/management/properties/PropertyRoutePanel";
+import Properties from "./components/admin/management/properties/Properties";
 import SettingsAdmin from "./layout/admin/pages/SettingsAdmin";
 
 import InvitationProvider from "./context/InvitationProvider";
+import PropertyProvider from "./context/PropertyProvider";
+import AccessProvider from "./context/AccessProvider";
 
 const roleDestinations = {
   admin: "/admin/overview",
@@ -136,7 +140,27 @@ function PublicOnlyRoute() {
 }
 
 function RegistrationRoute() {
-  const { session, profile, recovery, loading, error } = useAuth();
+  const { session, profile, recovery, loading, error, registrationPending } =
+    useAuth();
+
+  /*
+   * Recovery sessions must still use the password-reset flow,
+   * even while a registration operation is pending.
+   */
+  if (session && recovery) {
+    return <Navigate to="/reset-password" replace />;
+  }
+
+  /*
+   * Keep the registration form mounted while it coordinates
+   * verification, password setup, completion, and sign-out.
+   *
+   * Auth events can temporarily set loading or load the newly
+   * created profile before registration has finished signing out.
+   */
+  if (registrationPending) {
+    return <Outlet />;
+  }
 
   if (loading) {
     return <RouteLoadingScreen />;
@@ -144,10 +168,6 @@ function RegistrationRoute() {
 
   if (error) {
     return <RouteErrorScreen />;
-  }
-
-  if (session && recovery) {
-    return <Navigate to="/reset-password" replace />;
   }
 
   if (!profile) {
@@ -257,8 +277,30 @@ function App() {
         <Route path="/admin" element={<AdminView />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<Overview />} />
-          <Route path="management" element={<Management />} />
+          <Route path="management">
+            <Route index element={<Management />} />
+
+            <Route
+              path="properties"
+              element={
+                <PropertyProvider>
+                  <Properties />
+                </PropertyProvider>
+              }
+            >
+              <Route
+                path="new"
+                element={<PropertyRoutePanel mode="create" />}
+              />
+              <Route
+                path=":propertyId/edit"
+                element={<PropertyRoutePanel mode="edit" />}
+              />
+            </Route>
+          </Route>
+
           <Route path="catalogue" element={<Catalogue />} />
+
           <Route path="administration">
             <Route index element={<Administration />} />
             <Route
@@ -270,8 +312,16 @@ function App() {
               }
             />
             <Route path="users" element={<Users />} />
-            <Route path="access" element={<Access />} />
+            <Route
+              path="access"
+              element={
+                <AccessProvider>
+                  <Access />
+                </AccessProvider>
+              }
+            />
           </Route>
+
           <Route path="settings" element={<SettingsAdmin />} />
         </Route>
       </Route>

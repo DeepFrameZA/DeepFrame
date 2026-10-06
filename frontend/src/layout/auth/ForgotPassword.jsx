@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import toast from "react-hot-toast";
 import { supabase } from "../../lib/supabaseClient";
+import RequiredBadge from "../../components/RequiredBadge";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -82,6 +83,7 @@ function ForgotPassword() {
                   />
 
                   <span>Email</span>
+                  <RequiredBadge />
                 </label>
               </div>
 

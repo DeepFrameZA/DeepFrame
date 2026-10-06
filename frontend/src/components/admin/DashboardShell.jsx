@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import SignOutButton from "../auth/SignOutButton";
 import ThemeSwap from "../theme/ThemeSwap";
 import DashboardPanel from "./DashboardPanel";
+import { SidebarToggleIcon } from "../Icons";
 
 const DashboardShell = () => {
   const [panel, setPanel] = useState(null);
@@ -25,27 +26,14 @@ const DashboardShell = () => {
         <div className="drawer-content flex flex-col h-screen overflow-hidden">
           {/* Navbar */}
           <nav className="navbar w-full bg-base-300">
-            <div className="flex flex-1">
+            <div className="flex flex-1 gap-1 items-center">
               <label
                 htmlFor="dashboard-drawer"
                 aria-label="open sidebar"
-                className="btn btn-square btn-ghost drawer-button"
+                className="btn btn-ghost drawer-button p-1"
               >
                 {/* Sidebar toggle icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  strokeWidth="2"
-                  fill="none"
-                  stroke="currentColor"
-                  className="my-1.5 inline-block size-5"
-                >
-                  <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path>
-                  <path d="M9 4v16"></path>
-                  <path d="M14 10l2 2l-2 2"></path>
-                </svg>
+                <SidebarToggleIcon className="my-1.5 inline-block size-5" />
               </label>
               <div className="text-2xl font-bold">DeepFrame</div>
             </div>

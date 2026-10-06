@@ -45,7 +45,7 @@ const InvitationCardStat = ({ invitation, type }) => {
 
   return (
     <div className="flex items-center gap-2 p-0">
-      <Icon className="justify-self-top" />
+      <Icon className="justify-self-top size-8" />
 
       <div className="flex flex-col">
         <span className="text-xs opacity-70">{config.label}</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import toast from "react-hot-toast";
 import { supabase } from "../../lib/supabaseClient";
+import RequiredBadge from "../../components/RequiredBadge";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -88,6 +89,7 @@ function Login() {
                 />
 
                 <span>Email</span>
+                <RequiredBadge />
               </label>
             </div>
 
@@ -122,6 +124,7 @@ function Login() {
                 />
 
                 <span>Password</span>
+                <RequiredBadge />
               </label>
 
               <div className="mt-2 flex justify-end">

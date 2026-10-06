@@ -23,19 +23,19 @@ const Administration = () => {
           <AdministrationCard
             title="Invitations"
             description="Create, review and revoke invitations."
-            icon={<InvitationsIcon />}
+            icon={<InvitationsIcon className="size-5" />}
             onClick={() => navigate("/admin/administration/invitations")}
           />
           <AdministrationCard
             title="Users"
             description="Manage user accounts and profiles."
-            icon={<UsersIcon />}
+            icon={<UsersIcon className="size-5" />}
             onClick={() => navigate("/admin/administration/users")}
           />
           <AdministrationCard
             title="Accesss"
             description="Manage resident and contractor access to properties."
-            icon={<AccessIcon />}
+            icon={<AccessIcon className="size-5" />}
             onClick={() => navigate("/admin/administration/access")}
           />
         </div>

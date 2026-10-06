@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../lib/supabaseClient";
+import RequiredBadge from "../../components/RequiredBadge";
 
 const passwordPattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 
@@ -115,6 +116,7 @@ function ResetPassword() {
                   disabled={resetting}
                 />
                 <span>New password</span>
+                <RequiredBadge />
               </label>
 
               <p className="mt-2">
@@ -155,6 +157,7 @@ function ResetPassword() {
                   disabled={resetting}
                 />
                 <span>Confirm new password</span>
+                <RequiredBadge />
               </label>
             </div>
 

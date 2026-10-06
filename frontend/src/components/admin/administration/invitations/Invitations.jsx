@@ -132,7 +132,7 @@ const Invitations = () => {
             type="button"
             onClick={handleCreateInvitation}
           >
-            <PlusIcon />
+            <PlusIcon className="size-5" />
             Create invite
           </button>
         </div>

@@ -1,63 +1,289 @@
-const Roles = () => {
+function RegistrationSteps({ currentStep }) {
+  return (
+    <ul
+      className="steps steps-horizontal w-full"
+      aria-label="Registration progress"
+    >
+      {["Invitation", "Verify email", "Password"].map((label, index) => (
+        <li
+          key={label}
+          className={`step ${currentStep >= index + 1 ? "step-primary" : ""}`}
+          aria-current={currentStep === index + 1 ? "step" : undefined}
+        >
+          {label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const Access = () => {
+  const currentStep = 2;
+  const authError = false;
+  const completed = false;
+  const busy = true;
+  const disabled = false;
+  const action = "";
+  const registrationComplete = false;
+
   return (
     <>
-      <dialog
-        className={`modal ${open ? "modal-open" : ""}`}
-        aria-labelledby="revoke-invitation-title"
-      >
-        <div className="modal-box max-w-md border border-base-300">
-          {/* Heading */}
-          <div className="py-2">
-            <h2 id="revoke-invitation-title" className="text-lg font-semibold">
-              Revoke invitation
-            </h2>
+      <main className="flex items-center justify-center p-4">
+        <div className="card card-border bg-base-100 w-full max-w-md">
+          <div className="card-body gap-6">
+            <div>
+              <h1 className="card-title">Register</h1>
+              <p className="mt-2">
+                Registration is available to invited residents and contractors.
+              </p>
+            </div>
 
-            <p className="mb-2 mt-1 text-sm opacity-60">
-              This action cannot be undone.
-            </p>
-          </div>
+            {authError && (
+              <div className="alert alert-error" role="alert">
+                Unable to load your account. Refresh the page or sign out and
+                try again.
+              </div>
+            )}
 
-          {/* Invitation identity */}
-          <div className="grid grid-cols-2 space-y-2">
-            <span className="">Email:</span>
-            <span className="text-end">testemail@test.com</span>
-            <span className="">Role:</span>
-            <span className="text-end capitalize">Resident</span>
-          </div>
+            {completed ? (
+              <section className="space-y-6">
+                <div className="alert alert-success" role="status">
+                  {registrationComplete && busy
+                    ? "Registration complete. Taking you to login…"
+                    : "Your account is registered. Select Login to continue."}
+                </div>
 
-          {/* Explanation */}
-          <div className="">
-            <p className="text-sm leading-relaxed opacity-80">
-              This invitation will no longer be valid and cannot be used to
-              register an account.
-            </p>
-          </div>
+                <div className="card-actions justify-end">
+                  <button
+                    className="btn w-23"
+                    type="button"
+                    disabled={busy}
+                    aria-label="Login"
+                    aria-busy={busy}
+                  >
+                    {busy ? (
+                      <span className="loading loading-bars loading-xs" />
+                    ) : (
+                      "Login"
+                    )}
+                  </button>
+                </div>
+              </section>
+            ) : (
+              <>
+                <RegistrationSteps currentStep={currentStep} />
 
-          <div className="divider my-0 mt-2"></div>
-          {/* Actions */}
-          <div className="flex justify-end gap-2 p-4">
-            <button type="button" className="btn btn-outline min-w-23">
-              Cancel
-            </button>
+                {currentStep === 1 && (
+                  <form className="space-y-6">
+                    <fieldset>
+                      <h3 className="label pb-2">Your email address:</h3>
+                      <label className="floating-label input validator w-full">
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          autoComplete="email"
+                          required
+                          disabled={disabled}
+                        />
+                        <span>Email</span>
+                      </label>
+                    </fieldset>
 
-            <button
-              type="button"
-              className="btn btn-error btn-outline min-w-23"
-            >
-              <span className="loading loading-bars loading-xs" />
-              Revoke
-            </button>
+                    <fieldset>
+                      <h3 className="label pb-2">Your invitation code:</h3>
+                      <label className="floating-label input validator w-full">
+                        <input
+                          type="text"
+                          placeholder="XXXX-XXXX-XXXX"
+                          autoComplete="off"
+                          autoCapitalize="characters"
+                          spellCheck={false}
+                          maxLength={14}
+                          required
+                          disabled={disabled}
+                        />
+                        <span>Invitation code</span>
+                      </label>
+                    </fieldset>
+
+                    <div className="card-actions justify-between">
+                      {busy ? (
+                        <button className="btn w-23 btn-ghost" disabled>
+                          Cancel
+                        </button>
+                      ) : (
+                        <a className="btn w-23 btn-ghost" to="/login">
+                          Cancel
+                        </a>
+                      )}
+
+                      <button
+                        className="btn w-23"
+                        type="submit"
+                        disabled={disabled}
+                        aria-label="Continue"
+                        aria-busy={action === "request"}
+                      >
+                        {busy ? (
+                          <span className="loading loading-bars loading-xs" />
+                        ) : (
+                          "Continue"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {currentStep === 2 && (
+                  <form className="space-y-6">
+                    <div className="alert alert-info" role="status">
+                      <p>
+                        Enter the six-digit code sent to{" "}
+                        <strong>pending@email.com</strong>.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <label className="otp validator">
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+                        <span aria-hidden="true" />
+
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          aria-label="Six-digit verification code"
+                          pattern="[0-9]{6}"
+                          minLength={6}
+                          maxLength={6}
+                          required
+                          disabled={disabled}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="divider" />
+
+                    <div className="flex flex-col gap-1">
+                      <div className="w-full">
+                        <span className="mr-2">Didn't get a code?</span>
+                        <button
+                          className="link"
+                          type="button"
+                          disabled={disabled}
+                        >
+                          {action === "resend" ? (
+                            <span className="loading loading-bars loading-xs" />
+                          ) : (
+                            "Resend code"
+                          )}
+                        </button>
+                      </div>
+                      <div className="w-full">
+                        <span className="mr-2">Not the correct email?</span>
+                        <button
+                          className="link"
+                          type="button"
+                          disabled={disabled}
+                        >
+                          Change email
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="card-actions justify-end">
+                      <button
+                        className="btn w-23"
+                        type="submit"
+                        disabled={disabled}
+                        aria-label="Verify email"
+                        aria-busy={action === "verify"}
+                      >
+                        {action === "verify" ? (
+                          <span className="loading loading-bars loading-xs" />
+                        ) : (
+                          "Verify"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {currentStep === 3 && (
+                  <form className="space-y-6">
+                    <p>
+                      Set a password for <strong>session.user@email.com</strong>
+                      .
+                    </p>
+
+                    <div>
+                      <label className="floating-label input validator w-full">
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          autoComplete="new-password"
+                          minLength={8}
+                          pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                          required
+                          disabled={disabled}
+                        />
+                        <span>Password</span>
+                      </label>
+
+                      <p className="mt-2 text-xs">
+                        Use at least 8 characters, including an uppercase
+                        letter, a lowercase letter, and a number.
+                      </p>
+                    </div>
+
+                    <label className="floating-label input validator w-full">
+                      <input
+                        type="password"
+                        placeholder="Confirm password"
+                        autoComplete="new-password"
+                        minLength={8}
+                        required
+                        disabled={disabled}
+                      />
+                      <span>Confirm password</span>
+                    </label>
+
+                    <div className="card-actions justify-between">
+                      <button
+                        className="btn btn-ghost w-23"
+                        type="button"
+                        disabled={busy}
+                      >
+                        Sign out
+                      </button>
+
+                      <button
+                        className="btn w-23"
+                        type="submit"
+                        disabled={disabled}
+                        aria-label="Create account"
+                        aria-busy={action === "complete"}
+                      >
+                        {action === "complete" ? (
+                          <span className="loading loading-bars loading-xs" />
+                        ) : (
+                          "Create"
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        <button
-          type="button"
-          className="modal-backdrop"
-          aria-label="Cancel revocation"
-        />
-      </dialog>
+      </main>
     </>
   );
 };
 
-export default Roles;
+export default Access;

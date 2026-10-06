@@ -47,7 +47,11 @@ const InvitationTable = ({ invitations, onRevoke }) => {
                     onClick={() => onRevoke(invitation)}
                     disabled={!canRevoke}
                   >
-                    {canRevoke ? "Revoke" : <DisabledButtonIcon />}
+                    {canRevoke ? (
+                      "Revoke"
+                    ) : (
+                      <DisabledButtonIcon className="size-5" />
+                    )}
                   </button>
                 </td>
               </tr>

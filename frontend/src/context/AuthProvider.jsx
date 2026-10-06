@@ -53,6 +53,7 @@ function AuthProvider({ children }) {
   const [recovery, setRecovery] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [registrationPending, setRegistrationPending] = useState(false);
 
   const mountedRef = useRef(false);
   const sessionRef = useRef(null);
@@ -127,7 +128,16 @@ function AuthProvider({ children }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    await synchronizeSession(sessionRef.current);
+    const {
+      data: { session: currentSession },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      throw sessionError;
+    }
+
+    await synchronizeSession(currentSession);
   }, [synchronizeSession]);
 
   useEffect(() => {
@@ -193,8 +203,18 @@ function AuthProvider({ children }) {
       loading,
       error,
       refreshProfile,
+      registrationPending,
+      setRegistrationPending,
     }),
-    [session, profile, recovery, loading, error, refreshProfile],
+    [
+      session,
+      profile,
+      recovery,
+      loading,
+      error,
+      refreshProfile,
+      registrationPending,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

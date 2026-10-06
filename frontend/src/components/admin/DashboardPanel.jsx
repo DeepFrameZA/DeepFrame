@@ -42,12 +42,14 @@ const DashboardPanel = ({ open, title, description, children, onClose }) => {
             onClick={onClose}
             aria-label="Close panel"
           >
-            <ModalCloseIcon />
+            <ModalCloseIcon className="size-5" />
           </button>
         </div>
-        <div className="divider justify-self-center px-5 my-0"></div>
+        <div className="divider justify-self-center px-5 my-0" />
 
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex flex-1 overflow-hidden scrollbar-none">
+          {children}
+        </div>
       </div>
 
       <button

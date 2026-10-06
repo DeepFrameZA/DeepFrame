@@ -109,10 +109,11 @@ function InvitationProvider({ children }) {
   }, []);
 
   const createInvitation = useCallback(
-    async ({ invitedEmail, role }) => {
+    async ({ invitedEmail, role, propertyIds = [] }) => {
       const createdInvitation = await createInvitationRequest({
         invitedEmail,
         role,
+        propertyIds,
       });
 
       await refreshInvitations();

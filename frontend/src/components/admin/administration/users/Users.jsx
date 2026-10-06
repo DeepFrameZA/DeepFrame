@@ -25,7 +25,7 @@ const Users = () => {
           <h3 className="text-xs text-base-content">Administration</h3>
         </Link>
         <h1 className="text-2xl font-bold">Users</h1>
-        <p className="flex flex-1 overflow-auto">
+        <p className="flex flex-1 overflow-auto scrollbar-none">
           Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean
           commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus
           et magnis dis parturient montes, nascetur ridiculus mus. Donec quam
