@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   grantPropertyAccessRequest,
+  grantPropertyAccessBulkRequest,
   listPropertyAccessAccountsRequest,
   listPropertyMembershipsRequest,
   revokePropertyAccessRequest,
@@ -79,6 +80,10 @@ function AccessProvider({ children }) {
     };
   }, [loadMemberships]);
 
+  /*
+   * Keep the single-property operation for individual Restore actions.
+   */
+
   const grantPropertyAccess = useCallback(
     async ({ profileId, propertyId }) => {
       const membershipId = await grantPropertyAccessRequest({
@@ -89,6 +94,25 @@ function AccessProvider({ children }) {
       await refreshMemberships();
 
       return membershipId;
+    },
+    [refreshMemberships],
+  );
+
+  /*
+   * Save the entire selection in one RPC, then refresh once.
+   * A failed refresh is reported through loadError without
+   * misreporting a successful grant as a failed mutation.
+   */
+  const grantPropertyAccessBulk = useCallback(
+    async ({ profileId, propertyIds }) => {
+      const results = await grantPropertyAccessBulkRequest({
+        profileId,
+        propertyIds,
+      });
+
+      await refreshMemberships();
+
+      return results;
     },
     [refreshMemberships],
   );
@@ -117,6 +141,7 @@ function AccessProvider({ children }) {
       loadError,
       refreshMemberships,
       grantPropertyAccess,
+      grantPropertyAccessBulk,
       revokePropertyAccess,
       listPropertyAccessAccounts,
     }),
@@ -126,6 +151,7 @@ function AccessProvider({ children }) {
       loadError,
       refreshMemberships,
       grantPropertyAccess,
+      grantPropertyAccessBulk,
       revokePropertyAccess,
       listPropertyAccessAccounts,
     ],

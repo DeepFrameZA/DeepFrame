@@ -35,7 +35,7 @@ function getRoleDestination(profile) {
 
 function RouteLoadingScreen() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center p-4">
       <span className="loading loading-bars loading-xl" aria-label="Loading" />
     </main>
   );
@@ -47,7 +47,7 @@ function RouteErrorScreen() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center p-4">
       <div role="alert" className="alert alert-error max-w-md">
         <div>
           <h1 className="font-bold">Unable to load your account</h1>
@@ -64,7 +64,7 @@ function RouteErrorScreen() {
 
 function UnknownRoleScreen() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center p-4">
       <div role="alert" className="alert alert-error max-w-md">
         <div>
           <h1 className="font-bold">Your account role is not recognized</h1>
@@ -316,7 +316,9 @@ function App() {
               path="access"
               element={
                 <AccessProvider>
-                  <Access />
+                  <PropertyProvider>
+                    <Access />
+                  </PropertyProvider>
                 </AccessProvider>
               }
             />

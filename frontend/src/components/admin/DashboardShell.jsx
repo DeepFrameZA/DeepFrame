@@ -23,7 +23,7 @@ const DashboardShell = () => {
           type="checkbox"
           className="drawer-toggle inline"
         />
-        <div className="drawer-content flex flex-col h-screen overflow-hidden">
+        <div className="drawer-content flex flex-col h-dvh overflow-hidden">
           {/* Navbar */}
           <nav className="navbar w-full bg-base-300">
             <div className="flex flex-1 gap-1 items-center">

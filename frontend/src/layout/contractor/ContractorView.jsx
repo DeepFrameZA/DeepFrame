@@ -287,7 +287,7 @@ function CreateButton() {
 
 function Sidebar() {
   return (
-    <aside className="hidden min-h-screen w-60 shrink-0 flex-col border-r border-[#d6d3cb] bg-[#f8f7f2] lg:flex">
+    <aside className="hidden min-h-dvh w-60 shrink-0 flex-col border-r border-[#d6d3cb] bg-[#f8f7f2] lg:flex">
       <div className="border-b border-[#d6d3cb] px-7 py-6">
         <p className="text-2xl font-bold tracking-[-0.04em]">DeepFrame</p>
         <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-[0.3em]">
@@ -648,8 +648,8 @@ function MobileBottomNavigation() {
 
 function AdminView() {
   return (
-    <div className="min-h-screen bg-[#efede7] text-[#171815]">
-      <div className="mx-auto flex min-h-screen max-w-[1600px] bg-[#f8f7f2] shadow-sm">
+    <div className="min-h-dvh bg-[#efede7] text-[#171815]">
+      <div className="mx-auto flex min-h-dvh max-w-[1600px] bg-[#f8f7f2] shadow-sm">
         <Sidebar />
 
         <div className="min-w-0 flex-1">

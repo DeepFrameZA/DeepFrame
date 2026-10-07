@@ -3,7 +3,7 @@ import SignOutButton from "../../components/auth/SignOutButton";
 const ResidentView = () => {
   return (
     <>
-      <main className="flex min-h-screen items-center justify-center p-4">
+      <main className="flex min-h-dvh items-center justify-center p-4">
         <div className="flex w-full max-w-2xl items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Resident</h1>

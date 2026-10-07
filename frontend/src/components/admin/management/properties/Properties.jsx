@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from "react-router";
 import { useProperty } from "../../../../hooks/useProperty";
-import { PlusIcon } from "../../../Icons";
+import { PlusIcon, ChevronLeftIcon } from "../../../Icons";
 import PropertyCard from "./PropertyCard";
 import PropertyTable from "./PropertyTable";
 
@@ -104,25 +104,13 @@ const Properties = () => {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <section className="flex flex-col flex-1 gap-4 p-4 overflow-hidden">
+      <section className="flex flex-col flex-1 gap-2 py-2 px-4 overflow-hidden">
         <Link
           to="/admin/management"
           className="link link-hover flex flex-row items-center gap-1 opacity-75"
           aria-label="Back to management"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-3"
-            aria-hidden="true"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeftIcon className="size-3" />
 
           <h3 className="text-xs text-base-content">Management</h3>
         </Link>
@@ -146,8 +134,8 @@ const Properties = () => {
           </button>
         </div>
 
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
-          <div className="shrink-0">
+        <div className="flex flex-col flex-1 gap-2 overflow-hidden">
+          <div className="">
             {/* Mobile: full-width property type selector */}
             <div className="grid gap-2 md:hidden">
               <label
@@ -257,14 +245,14 @@ const Properties = () => {
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setPage(Math.max(1, currentPage - 1))}
-                className="join-item btn btn-sm"
+                className="join-item btn btn-xs"
                 aria-label="Previous page"
               >
                 «
               </button>
 
               <button
-                className="join-item btn btn-sm pointer-events-none no-animation select-none"
+                className="join-item btn btn-xs pointer-events-none no-animation select-none"
                 type="button"
               >
                 {currentPage} / {pageCount}
@@ -274,7 +262,7 @@ const Properties = () => {
                 type="button"
                 disabled={currentPage === pageCount}
                 onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
-                className="join-item btn btn-sm"
+                className="join-item btn btn-xs"
                 aria-label="Next page"
               >
                 »

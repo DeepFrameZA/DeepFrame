@@ -46,7 +46,7 @@ function ForgotPassword() {
 
   return (
     <>
-      <main className="flex min-h-screen items-center justify-center p-4">
+      <main className="flex min-h-dvh items-center justify-center p-4">
         <div className="card card-border bg-base-100 w-full max-w-md">
           <div className="card-body">
             <h1 className="card-title mb-4">Forgot password</h1>

@@ -46,3 +46,23 @@ export async function revokePropertyAccessRequest(membershipId) {
     throw error;
   }
 }
+
+export async function grantPropertyAccessBulkRequest({
+  profileId,
+  propertyIds,
+}) {
+  const { data, error } = await supabase.rpc("grant_property_access_bulk", {
+    p_profile_id: profileId,
+    p_property_ids: propertyIds,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error("Granting property access returned no memberships.");
+  }
+
+  return data;
+}

@@ -3,7 +3,7 @@ import { Link, useOutletContext } from "react-router";
 import { useInvitation } from "../../../../hooks/useInvitation";
 import InvitationCard from "../../../../components/admin/administration/invitations/InvitationCard";
 import InvitationTable from "../../../../components/admin/administration/invitations/InvitationTable";
-import { PlusIcon } from "../../../Icons";
+import { PlusIcon, ChevronLeftIcon } from "../../../Icons";
 import RevokeInvitationModal from "../../../../components/admin/administration/invitations/RevokeInvitationModal";
 import CreateInvitationForm from "../../../../components/admin/administration/invitations/CreateInvitationForm";
 import toast from "react-hot-toast";
@@ -95,25 +95,13 @@ const Invitations = () => {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <section className="flex flex-col flex-1 gap-4 p-4 overflow-hidden">
+      <section className="flex flex-col flex-1 gap-2 py-2 px-4 overflow-hidden">
         <Link
           to="/admin/administration"
-          className="link link-hover flex flex-row items-center gap-1 opacity-75"
+          className="link link-hover flex flex-row items-center max-w-max gap-1 opacity-75"
           aria-label="Back to administration"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-3"
-            aria-hidden="true"
-          >
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <ChevronLeftIcon className="size-3" />
 
           <h3 className="text-xs text-base-content">Administration</h3>
         </Link>
@@ -122,7 +110,7 @@ const Invitations = () => {
           <div>
             <h1 className="text-2xl font-bold">Invitations</h1>
 
-            <p className={`text-sm opacity-70 md:text-nowrap`}>
+            <p className="text-sm opacity-70 md:text-nowrap">
               Review, create and revoke invitations.
             </p>
           </div>
@@ -137,7 +125,7 @@ const Invitations = () => {
           </button>
         </div>
 
-        <div className="flex flex-col flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col flex-1 gap-2 overflow-hidden">
           <div className="flex items-center justify-center md:justify-start">
             <div
               role="tablist"
@@ -189,14 +177,14 @@ const Invitations = () => {
                 type="button"
                 disabled={currentPage === 1}
                 onClick={() => setPage(Math.max(1, currentPage - 1))}
-                className="join-item btn btn-sm"
+                className="join-item btn btn-xs"
                 aria-label="Previous page"
               >
                 «
               </button>
 
               <button
-                className="join-item btn btn-sm pointer-events-none no-animation select-none"
+                className="join-item btn btn-xs pointer-events-none no-animation select-none"
                 type="button"
               >
                 {currentPage} / {pageCount}
@@ -206,7 +194,7 @@ const Invitations = () => {
                 type="button"
                 disabled={currentPage === pageCount}
                 onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
-                className="join-item btn btn-sm"
+                className="join-item btn btn-xs"
                 aria-label="Next page"
               >
                 »

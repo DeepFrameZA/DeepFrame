@@ -14,6 +14,13 @@ const IconFrame = ({ children, className = "size-8" }) => (
   </svg>
 );
 
+//Chevron left
+export const ChevronLeftIcon = ({ className }) => (
+  <IconFrame className={className}>
+    <path d="m15 18-6-6 6-6" />
+  </IconFrame>
+);
+
 //Sidebar Toggle Icon
 export const SidebarToggleIcon = ({ className }) => (
   <IconFrame className={className}>
